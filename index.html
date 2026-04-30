@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Индонезия: Макроэкономический анализ | Indonesia Macroeconomic Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Merriweather:ital,wght@0,300;0,700;1,300&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        h1, h2, h3, h4, h5, .serif-text { font-family: 'Merriweather', serif; }
+        .academic-header { background-color: #0f172a; border-bottom: 4px solid #7f1d1d; }
+
+        .toggle-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 14px; border-radius: 4px; font-size: 0.78rem; font-weight: 600;
+            border: 1.5px solid; cursor: pointer; transition: all 0.15s; font-family: 'Inter', sans-serif;
+        }
+        .toggle-btn.on  { background: #1e3a5f; color: #fff; border-color: #1e3a5f; }
+        .toggle-btn.off { background: #fff; color: #64748b; border-color: #cbd5e1; }
+        .toggle-btn:hover { opacity: 0.82; }
+
+        .section-tab {
+            padding: 10px 22px; font-size: 0.84rem; font-weight: 600;
+            border-bottom: 3px solid transparent; cursor: pointer;
+            color: #64748b; transition: all 0.15s; white-space: nowrap; background: none; border-top: none; border-left: none; border-right: none;
+        }
+        .section-tab.active { border-bottom-color: #1e40af; color: #1e40af; }
+        .section-tab:hover:not(.active) { color: #334155; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .adas-canvas { background: #fff; border: 1px solid #e2e8f0; width: 100%; display: block; }
+
+        /* ====== PRINT STYLES ====== */
+        @media print {
+            /* Hide all interactive chrome */
+            .no-print, nav, .section-tab { display: none !important; }
+
+            /* Reset colours & layout */
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { background: #fff !important; font-size: 10pt; margin: 0; padding: 0; }
+            main { padding: 0 8mm !important; }
+            .max-w-7xl { max-width: 100% !important; padding: 0 !important; }
+
+            /* Show ALL tab content when printing */
+            .tab-content { display: block !important; }
+
+            /* Header */
+            .academic-header { padding: 12mm 8mm !important; }
+
+            /* Page breaks */
+            .print-page-break { page-break-before: always; break-before: page; }
+            section { page-break-inside: avoid; break-inside: avoid; margin-bottom: 6mm; }
+
+            /* Charts — allow auto height for proper layout */
+            .chart-wrap { height: auto !important; min-height: 200px !important; position: static !important; margin-bottom: 3mm; page-break-inside: avoid; break-inside: avoid; }
+            .chart-wrap canvas { max-width: 100% !important; height: auto !important; display: block !important; }
+
+            /* AD-AS canvases: fix size and prevent aspect-ratio stretching */
+            canvas.adas-canvas {
+                height: 240px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                display: block !important;
+                object-fit: contain !important;
+            }
+            /* Episode canvases: fixed square-ish ratio */
+            canvas.adas-canvas[id^="adasCase"] {
+                height: 180px !important;
+            }
+
+            /* Tables */
+            table { font-size: 9pt; }
+
+            /* Boxes */
+            .bg-white, .bg-slate-50 { background: #fff !important; }
+            .shadow-sm, .shadow-md { box-shadow: none !important; }
+
+            /* Section labels for print navigation */
+            .print-section-label {
+                display: block !important;
+                font-family: 'Merriweather', serif;
+                font-size: 14pt; font-weight: 700;
+                color: #0f172a; margin-top: 8mm; margin-bottom: 4mm;
+                border-bottom: 2px solid #7f1d1d; padding-bottom: 2mm;
+            }
+
+            /* Equilibrium grid: ensure 2-col stays side-by-side */
+            .equilibrium-grid {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 16px !important;
+            }
+            /* Episode grid: 3-col */
+            .episode-grid {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr 1fr !important;
+                gap: 12px !important;
+            }
+        }
+        /* Hide print section labels on screen */
+        .print-section-label { display: none; }
+    </style>
+</head>
+<body class="antialiased">
+
+<!-- ===== HEADER ===== -->
+<header class="academic-header text-white py-10 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold tracking-tight">
+                    <span class="lang-ru">Макроэкономическое развитие Индонезии</span>
+                    <span class="lang-en hidden">Indonesia's Macroeconomic Development</span>
+                </h1>
+                <p class="mt-3 text-slate-300 text-lg font-light">
+                    <span class="lang-ru">Анализ ВВП, Инфляции, Безработицы и Ставки ЦБ (2000–2025)</span>
+                    <span class="lang-en hidden">Analysis of GDP, Inflation, Unemployment and Policy Rate (2000–2025)</span>
+                </p>
+                <div class="mt-5 pt-3 border-t border-slate-700/50 inline-block">
+                    <p class="text-slate-300 text-sm">
+                        Выполнил: <span class="font-semibold text-white">Садана Эрланд</span> |
+                        <span class="font-semibold text-white">ЭЭУбд-07-25</span> | <span class="font-semibold text-white">1132255233</span>
+                    </p>
+                </div>
+            </div>
+            <div class="flex flex-col gap-2 items-start no-print">
+                <button onclick="toggleLanguage()" class="bg-white/10 hover:bg-white/20 border border-white/30 text-white rounded-lg px-4 py-2 text-sm font-semibold transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+                    <span class="lang-ru">English</span><span class="lang-en hidden">Русский</span>
+                </button>
+                <!-- <button onclick="printReport()" class="bg-white/10 hover:bg-white/20 border border-white/30 text-white rounded-lg px-4 py-2 text-sm font-semibold transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2m-6 0v4m-3-4h6"/></svg>
+                    <span class="lang-ru">Печать / PDF</span><span class="lang-en hidden">Print / PDF</span>
+                </button> -->
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- ===== NAV TABS (screen only) ===== -->
+<nav class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-30 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex overflow-x-auto">
+            <button class="section-tab active" onclick="showTab('tab-macro')">
+                <span class="lang-ru">I. Динамика ВВП</span><span class="lang-en hidden">I. GDP Dynamics</span>
+            </button>
+            <button class="section-tab" onclick="showTab('tab-interest')">
+                <span class="lang-ru">II. ВВП и Ставка ЦБ</span><span class="lang-en hidden">II. GDP & Policy Rate</span>
+            </button>
+            <button class="section-tab" onclick="showTab('tab-equilibrium')">
+                <span class="lang-ru">III. Равновесие AD–AS</span><span class="lang-en hidden">III. AD–AS Equilibrium</span>
+            </button>
+            <button class="section-tab" onclick="showTab('tab-analysis')">
+                <span class="lang-ru">IV. Анализ</span><span class="lang-en hidden">IV. Analysis</span>
+            </button>
+            <button class="section-tab" onclick="showTab('tab-data')">
+                <span class="lang-ru">V. Данные</span><span class="lang-en hidden">V. Raw Data</span>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+<!-- ====================================================================== -->
+<!-- SECTION I: GDP DYNAMICS                                                  -->
+<!-- ====================================================================== -->
+<span class="print-section-label lang-ru">I. Динамика ВВП и экономические циклы Индонезии (2000–2025)</span>
+<span class="print-section-label lang-en hidden">I. Indonesia GDP Dynamics & Economic Cycles (2000–2025)</span>
+
+<div id="tab-macro" class="tab-content active">
+
+    <section class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 border-b border-slate-200 pb-4">
+            <h2 class="text-xl font-bold text-slate-800">
+                <span class="lang-ru">I. Динамика ВВП и экономические циклы Индонезии (2000–2025)</span>
+                <span class="lang-en hidden">I. Indonesia GDP Dynamics & Economic Cycles (2000–2025)</span>
+            </h2>
+            <div class="flex flex-wrap gap-2 no-print">
+                <button class="toggle-btn on" id="btn-gdp" onclick="toggleDS('macro',0,this)">
+                    <span class="lang-ru">Рост ВВП</span><span class="lang-en hidden">GDP Growth</span>
+                </button>
+                <button class="toggle-btn on" id="btn-inf" onclick="toggleDS('macro',1,this)">
+                    <span class="lang-ru">Инфляция</span><span class="lang-en hidden">Inflation</span>
+                </button>
+                <button class="toggle-btn on" id="btn-ump" onclick="toggleDS('macro',2,this)">
+                    <span class="lang-ru">Безработица</span><span class="lang-en hidden">Unemployment</span>
+                </button>
+                <button class="toggle-btn on" id="btn-tr1" onclick="toggleTrend('macro',this)">
+                    <span class="lang-ru">Линия тренда ВВП</span><span class="lang-en hidden">GDP Trendline</span>
+                </button>
+            </div>
+        </div>
+        <div class="chart-wrap" style="position:relative;height:360px;">
+            <canvas id="macroChart"></canvas>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
+            <span class="flex items-center gap-1.5">
+                <span style="display:inline-block;width:24px;height:2px;background:#dc2626;border-top:2px dashed #dc2626;"></span>
+                <span class="lang-ru">Кризисная отметка</span><span class="lang-en hidden">Crisis marker</span>
+            </span>
+            <span class="flex items-center gap-1.5">
+                <span style="display:inline-block;width:24px;height:2px;border-top:2px dashed #7c3aed;"></span>
+                <span class="lang-ru">Линия тренда ВВП (линейная регрессия)</span><span class="lang-en hidden">GDP trendline (linear regression)</span>
+            </span>
+        </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <!-- Timeline -->
+        <div class="lg:col-span-2 bg-white shadow-sm border border-slate-200 p-6">
+            <h2 class="text-lg font-bold text-slate-800 border-b border-slate-300 pb-2 mb-5">
+                <span class="lang-ru">Хронология экономических циклов</span>
+                <span class="lang-en hidden">Economic Cycles Timeline</span>
+            </h2>
+            <div class="relative border-l-2 border-slate-300 ml-4 space-y-0">
+
+                <!-- Era 1 -->
+                <div class="pl-7 pb-7 relative">
+                    <div class="absolute w-3.5 h-3.5 bg-blue-900 rounded-full -left-[7px] top-1 ring-4 ring-white"></div>
+                    <h3 class="text-sm font-bold text-slate-900">
+                        <span class="lang-ru">2000–2007: Восстановление после Азиатского кризиса и структурные реформы</span>
+                        <span class="lang-en hidden">2000–2007: Post-Asian-Crisis Recovery & Structural Reforms</span>
+                    </h3>
+                    <span class="mt-1 inline-block bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5">
+                        <span class="lang-ru">Фаза: Расширение</span><span class="lang-en hidden">Phase: Expansion</span>
+                    </span>
+                    <ul class="mt-2 text-xs text-slate-600 space-y-1 list-disc list-inside lang-ru">
+                        <li>Рост ВВП ускорился с 4,9% до 6,3%.</li>
+                        <li>Инфляция нестабильна: пик 13,1% в 2006 г. из-за отмены субсидий на топливо (инфляция издержек).</li>
+                        <li>Безработица высокая — достигла 11,2% в 2005 г. (структурная безработица).</li>
+                    </ul>
+                    <ul class="mt-2 text-xs text-slate-600 space-y-1 list-disc list-inside lang-en hidden">
+                        <li>GDP growth accelerated from 4.9% to 6.3%.</li>
+                        <li>Inflation volatile: peaked at 13.1% in 2006 due to fuel subsidy cuts (cost-push inflation).</li>
+                        <li>Unemployment high — reached 11.2% in 2005 (structural unemployment).</li>
+                    </ul>
+                    <div class="mt-2 text-xs text-slate-700 bg-amber-50 border-l-2 border-amber-400 p-2 lang-ru"><strong>Кризис 2005–2006:</strong> Инфляция издержек вследствие реформы топливных субсидий. Отмечено на графике.</div>
+                    <div class="mt-2 text-xs text-slate-700 bg-amber-50 border-l-2 border-amber-400 p-2 lang-en hidden"><strong>Crisis 2005–2006:</strong> Cost-push inflation from fuel subsidy reform. Marked on chart.</div>
+                </div>
+
+                <!-- Era 2 -->
+                <div class="pl-7 pb-7 relative">
+                    <div class="absolute w-3.5 h-3.5 bg-red-700 rounded-full -left-[7px] top-1 ring-4 ring-white"></div>
+                    <h3 class="text-sm font-bold text-slate-900">
+                        <span class="lang-ru">2008–2009: Влияние мирового финансового кризиса</span>
+                        <span class="lang-en hidden">2008–2009: Global Financial Crisis Impact</span>
+                    </h3>
+                    <span class="mt-1 inline-block bg-red-100 text-red-800 text-xs font-semibold px-2 py-0.5">
+                        <span class="lang-ru">Фаза: Умеренный спад</span><span class="lang-en hidden">Phase: Moderate Slowdown</span>
+                    </span>
+                    <ul class="mt-2 text-xs text-slate-600 space-y-1 list-disc list-inside lang-ru">
+                        <li>ВВП замедлился до 4,6% в 2009 г., рецессии удалось избежать.</li>
+                        <li>Устойчивость обусловлена сильным внутренним потреблением (не экспортно-ориентированная экономика).</li>
+                    </ul>
+                    <ul class="mt-2 text-xs text-slate-600 space-y-1 list-disc list-inside lang-en hidden">
+                        <li>GDP slowed to 4.6% in 2009; recession avoided.</li>
+                        <li>Resilience due to strong domestic consumption (not export-driven economy).</li>
+                    </ul>
+                </div>
+
+                <!-- Era 3 -->
+                <div class="pl-7 pb-7 relative">
+                    <div class="absolute w-3.5 h-3.5 bg-blue-900 rounded-full -left-[7px] top-1 ring-4 ring-white"></div>
+                    <h3 class="text-sm font-bold text-slate-900">
+                        <span class="lang-ru">2010–2019: Макроэкономическая стабилизация</span>
+                        <span class="lang-en hidden">2010–2019: Macroeconomic Stabilization</span>
+                    </h3>
+                    <span class="mt-1 inline-block bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5">
+                        <span class="lang-ru">Фаза: Устойчивый рост</span><span class="lang-en hidden">Phase: Stable Growth</span>
+                    </span>
+                    <ul class="mt-2 text-xs text-slate-600 space-y-1 list-disc list-inside lang-ru">
+                        <li>ВВП стабилен на уровне 5–6%; инфляция снизилась до 2,8% к 2019 г.</li>
+                        <li>Безработица сократилась с 7,1% (2010) до 5,2% (2019).</li>
+                    </ul>
+                    <ul class="mt-2 text-xs text-slate-600 space-y-1 list-disc list-inside lang-en hidden">
+                        <li>GDP stable at 5–6%; inflation declined to 2.8% by 2019.</li>
+                        <li>Unemployment fell from 7.1% (2010) to 5.2% (2019).</li>
+                    </ul>
+                </div>
+
+                <!-- Era 4 -->
+                <div class="pl-7 pb-7 relative">
+                    <div class="absolute w-3.5 h-3.5 bg-red-700 rounded-full -left-[7px] top-1 ring-4 ring-white"></div>
+                    <h3 class="text-sm font-bold text-slate-900">
+                        <span class="lang-ru">2020: Рецессия вследствие пандемии COVID-19</span>
+                        <span class="lang-en hidden">2020: COVID-19 Pandemic Recession</span>
+                    </h3>
+                    <span class="mt-1 inline-block bg-red-100 text-red-800 text-xs font-semibold px-2 py-0.5">
+                        <span class="lang-ru">Фаза: Рецессия (−2,1%)</span><span class="lang-en hidden">Phase: Recession (−2.1%)</span>
+                    </span>
+                    <ul class="mt-2 text-xs text-slate-600 space-y-1 list-disc list-inside lang-ru">
+                        <li>Первая рецессия с 1998 г. ВВП −2,1%; безработица выросла до 7,1%.</li>
+                        <li>Инфляция упала до 2,0% из-за сокращения совокупного спроса.</li>
+                    </ul>
+                    <ul class="mt-2 text-xs text-slate-600 space-y-1 list-disc list-inside lang-en hidden">
+                        <li>First recession since 1998. GDP −2.1%; unemployment rose to 7.1%.</li>
+                        <li>Inflation fell to 2.0% due to aggregate demand collapse.</li>
+                    </ul>
+                    <div class="mt-2 text-xs text-slate-700 bg-red-50 border-l-2 border-red-500 p-2 lang-ru"><strong>Кризис 2020:</strong> COVID-19 — крупнейший внешний шок. Отмечено на графике.</div>
+                    <div class="mt-2 text-xs text-slate-700 bg-red-50 border-l-2 border-red-500 p-2 lang-en hidden"><strong>Crisis 2020:</strong> COVID-19 — major external demand shock. Marked on chart.</div>
+                </div>
+
+                <!-- Era 5 -->
+                <div class="pl-7 relative">
+                    <div class="absolute w-3.5 h-3.5 bg-blue-900 rounded-full -left-[7px] top-1 ring-4 ring-white"></div>
+                    <h3 class="text-sm font-bold text-slate-900">
+                        <span class="lang-ru">2021–2025: Восстановление после COVID</span>
+                        <span class="lang-en hidden">2021–2025: Post-COVID Recovery</span>
+                    </h3>
+                    <span class="mt-1 inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5">
+                        <span class="lang-ru">Фаза: Восстановление и расширение</span><span class="lang-en hidden">Phase: Recovery & Expansion</span>
+                    </span>
+                    <ul class="mt-2 text-xs text-slate-600 space-y-1 list-disc list-inside lang-ru">
+                        <li>ВВП вернулся к ~5%; инфляция стабилизировалась на уровне 2–2,5%.</li>
+                        <li>Восстановление поддержано фискальными стимулами и денежно-кредитной политикой Банка Индонезии.</li>
+                    </ul>
+                    <ul class="mt-2 text-xs text-slate-600 space-y-1 list-disc list-inside lang-en hidden">
+                        <li>GDP returned to ~5%; inflation stabilized at 2–2.5%.</li>
+                        <li>Recovery supported by fiscal stimulus and Bank Indonesia monetary policy.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="space-y-4">
+            <div class="bg-white shadow-sm border border-slate-200 p-5">
+                <h3 class="text-sm font-bold text-slate-800 mb-3">
+                    <span class="lang-ru">Описательная статистика</span><span class="lang-en hidden">Descriptive Statistics</span>
+                </h3>
+                <table class="w-full text-xs text-left border-collapse">
+                    <thead class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                        <tr>
+                            <th class="px-2 py-2 font-semibold"><span class="lang-ru">Показатель</span><span class="lang-en hidden">Variable</span></th>
+                            <th class="px-2 py-2 font-semibold"><span class="lang-ru">Среднее</span><span class="lang-en hidden">Mean</span></th>
+                            <th class="px-2 py-2 font-semibold"><span class="lang-ru">Ст.откл.</span><span class="lang-en hidden">Std.Dev.</span></th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-slate-600 divide-y divide-slate-100">
+                        <tr><td class="px-2 py-2"><span class="lang-ru">Рост ВВП (%)</span><span class="lang-en hidden">GDP Growth (%)</span></td><td class="px-2 py-2">4.88</td><td class="px-2 py-2">1.57</td></tr>
+                        <tr><td class="px-2 py-2"><span class="lang-ru">Инфляция (%)</span><span class="lang-en hidden">Inflation (%)</span></td><td class="px-2 py-2">5.66</td><td class="px-2 py-2">3.25</td></tr>
+                        <tr><td class="px-2 py-2"><span class="lang-ru">Безработица (%)</span><span class="lang-en hidden">Unemployment (%)</span></td><td class="px-2 py-2">7.08</td><td class="px-2 py-2">1.85</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bg-white shadow-sm border border-slate-200 p-5">
+                <h3 class="text-sm font-bold text-slate-800 mb-3">
+                    <span class="lang-ru">Матрица корреляций</span><span class="lang-en hidden">Correlation Matrix</span>
+                </h3>
+                <table class="w-full text-xs text-center border-collapse">
+                    <thead class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                        <tr>
+                            <th class="px-2 py-2 text-left font-semibold"></th>
+                            <th class="px-2 py-2 font-semibold"><span class="lang-ru">ВВП</span><span class="lang-en hidden">GDP</span></th>
+                            <th class="px-2 py-2 font-semibold"><span class="lang-ru">Инфл.</span><span class="lang-en hidden">Infl.</span></th>
+                            <th class="px-2 py-2 font-semibold"><span class="lang-ru">Безраб.</span><span class="lang-en hidden">Unemp.</span></th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-slate-600 divide-y divide-slate-100">
+                        <tr><td class="px-2 py-2 text-left font-medium"><span class="lang-ru">ВВП</span><span class="lang-en hidden">GDP</span></td><td class="px-2 py-2 bg-slate-50 font-bold">1</td><td class="px-2 py-2">0.23</td><td class="px-2 py-2">0.04</td></tr>
+                        <tr><td class="px-2 py-2 text-left font-medium"><span class="lang-ru">Инфляция</span><span class="lang-en hidden">Inflation</span></td><td class="px-2 py-2">0.23</td><td class="px-2 py-2 bg-slate-50 font-bold">1</td><td class="px-2 py-2 font-bold text-red-700">0.76</td></tr>
+                        <tr><td class="px-2 py-2 text-left font-medium"><span class="lang-ru">Безработица</span><span class="lang-en hidden">Unemployment</span></td><td class="px-2 py-2">0.04</td><td class="px-2 py-2 font-bold text-red-700">0.76</td><td class="px-2 py-2 bg-slate-50 font-bold">1</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- SECTION II: GDP + POLICY RATE                                            -->
+<!-- ====================================================================== -->
+<span class="print-section-label lang-ru print-page-break">II. Наложение графиков: ВВП и Ставка Банка Индонезии (2000–2025)</span>
+<span class="print-section-label lang-en hidden print-page-break">II. Overlay: GDP Growth & Bank Indonesia Policy Rate (2000–2025)</span>
+
+<div id="tab-interest" class="tab-content">
+
+    <section class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 border-b border-slate-200 pb-4">
+            <div>
+                <h2 class="text-xl font-bold text-slate-800">
+                    <span class="lang-ru">II. ВВП и Ставка Банка Индонезии — Наложение графиков (2000–2025)</span>
+                    <span class="lang-en hidden">II. GDP & Bank Indonesia Policy Rate — Overlay (2000–2025)</span>
+                </h2>
+                <p class="text-xs text-slate-500 mt-1 lang-ru">Анализ корреляции денежно-кредитной политики и темпов экономического роста</p>
+                <p class="text-xs text-slate-500 mt-1 lang-en hidden">Correlation analysis between monetary policy and economic growth rate</p>
+            </div>
+            <div class="flex flex-wrap gap-2 no-print">
+                <button class="toggle-btn on" id="btn-gdp2" onclick="toggleDS('interest',0,this)">
+                    <span class="lang-ru">Рост ВВП</span><span class="lang-en hidden">GDP Growth</span>
+                </button>
+                <button class="toggle-btn on" id="btn-rate" onclick="toggleDS('interest',1,this)">
+                    <span class="lang-ru">Ставка ЦБ</span><span class="lang-en hidden">Policy Rate</span>
+                </button>
+                <button class="toggle-btn on" id="btn-tr2" onclick="toggleTrend('interest',this)">
+                    <span class="lang-ru">Линия тренда ВВП</span><span class="lang-en hidden">GDP Trendline</span>
+                </button>
+            </div>
+        </div>
+        <div class="chart-wrap" style="position:relative;height:360px;">
+            <canvas id="interestChart"></canvas>
+        </div>
+        <div class="mt-3 p-4 bg-slate-50 border border-slate-200 text-xs text-slate-700">
+            <strong class="lang-ru">Примечание по оси:</strong>
+            <strong class="lang-en hidden">Axis note:</strong>
+            <span class="lang-ru"> Левая ось (синяя) = Рост ВВП (%). Правая ось (оранжевая) = Ставка ЦБ (%). Периоды высоких ставок часто предшествуют замедлению ВВП — монетарное ужесточение.</span>
+            <span class="lang-en hidden"> Left axis (blue) = GDP Growth (%). Right axis (orange) = Policy Rate (%). High-rate periods often precede GDP slowdowns — monetary tightening.</span>
+        </div>
+    </section>
+
+    <section class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+        <h3 class="text-base font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">
+            <span class="lang-ru">Анализ корреляции: Ставка ЦБ и Рост ВВП</span>
+            <span class="lang-en hidden">Correlation Analysis: Policy Rate and GDP Growth</span>
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+            <div class="bg-slate-50 border border-slate-200 p-4">
+                <div class="text-xl font-bold text-blue-900 mb-1">−0.41</div>
+                <div class="text-xs font-semibold text-slate-700 lang-ru">Коэффициент корреляции: Ставка ЦБ — Рост ВВП</div>
+                <div class="text-xs font-semibold text-slate-700 lang-en hidden">Correlation coefficient: Policy Rate — GDP Growth</div>
+                <div class="text-xs text-slate-500 mt-1 lang-ru">Умеренная отрицательная связь</div>
+                <div class="text-xs text-slate-500 mt-1 lang-en hidden">Moderate negative relationship</div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 p-4">
+                <div class="text-xl font-bold text-amber-700 mb-1">12.75%</div>
+                <div class="text-xs font-semibold text-slate-700 lang-ru">Пик ставки в 2005–2006 гг. (антиинфляционная реакция)</div>
+                <div class="text-xs font-semibold text-slate-700 lang-en hidden">Peak rate 2005–2006 (anti-inflation response)</div>
+                <div class="text-xs text-slate-500 mt-1 lang-ru">ВВП сохранился на уровне 5–6%</div>
+                <div class="text-xs text-slate-500 mt-1 lang-en hidden">GDP held at 5–6%</div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 p-4">
+                <div class="text-xl font-bold text-green-700 mb-1">3.50%</div>
+                <div class="text-xs font-semibold text-slate-700 lang-ru">Минимум ставки в 2020–2021 гг. (стимулирующая политика)</div>
+                <div class="text-xs font-semibold text-slate-700 lang-en hidden">Rate floor 2020–2021 (accommodative policy)</div>
+                <div class="text-xs text-slate-500 mt-1 lang-ru">Рецессия преодолена к 2021 г.</div>
+                <div class="text-xs text-slate-500 mt-1 lang-en hidden">Recession overcome by 2021</div>
+            </div>
+        </div>
+        <div class="space-y-3 text-xs text-slate-700">
+            <div class="border-l-4 border-blue-700 pl-3 lang-ru"><strong>Наблюдение 1:</strong> В 2005–2006 гг. Банк Индонезии повысил ставку с 8,5% до 12,75% для сдерживания инфляции. ВВП при этом остался устойчивым (5–6%), что свидетельствует о сильной буферной роли внутреннего спроса.</div>
+            <div class="border-l-4 border-blue-700 pl-3 lang-en hidden"><strong>Observation 1:</strong> In 2005–2006, Bank Indonesia raised its rate from 8.5% to 12.75% to contain inflation. GDP remained resilient (5–6%), showing that domestic demand buffers monetary tightening.</div>
+            <div class="border-l-4 border-amber-600 pl-3 lang-ru"><strong>Наблюдение 2:</strong> Снижение ставки в 2020–2021 гг. не предотвратило рецессии немедленно (ВВП −2,1% в 2020 г.), что говорит о доминировании внешних шоков над денежно-кредитными инструментами.</div>
+            <div class="border-l-4 border-amber-600 pl-3 lang-en hidden"><strong>Observation 2:</strong> The 2020–2021 rate cuts did not immediately prevent recession (GDP −2.1% in 2020), indicating external shocks dominated over monetary tools.</div>
+            <div class="border-l-4 border-green-700 pl-3 lang-ru"><strong>Вывод:</strong> Данные подтверждают умеренную отрицательную корреляцию (−0,41): повышение ставки ЦБ, как правило, замедляет рост ВВП с временным лагом 1–2 года.</div>
+            <div class="border-l-4 border-green-700 pl-3 lang-en hidden"><strong>Conclusion:</strong> Data confirms moderate negative correlation (−0.41): policy rate hikes tend to slow GDP growth with a 1–2 year transmission lag.</div>
+        </div>
+    </section>
+
+<!-- ====================================================================== -->
+<!-- MONETARY CHARTS: M2 Growth vs Inflation & M2/GDP Monetization           -->
+<!-- ====================================================================== -->
+
+    <section class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 border-b border-slate-200 pb-4">
+            <div>
+                <h2 class="text-xl font-bold text-slate-800">
+                    <span class="lang-ru">IIb. Денежная масса M2 и Инфляция (2000–2024)</span>
+                    <span class="lang-en hidden">IIb. Money Supply M2 Growth & Inflation (2000–2024)</span>
+                </h2>
+                <p class="text-xs text-slate-500 mt-1 lang-ru">Рост денежной массы (г/г, %) и индекс потребительских цен — количественная теория денег</p>
+                <p class="text-xs text-slate-500 mt-1 lang-en hidden">Year-on-year M2 growth (%) vs. CPI inflation — Quantity Theory of Money</p>
+            </div>
+            <div class="flex flex-wrap gap-2 no-print">
+                <button class="toggle-btn on" id="btn-m2g" onclick="toggleDS('m2inf',0,this)">M2 Growth %</button>
+                <button class="toggle-btn on" id="btn-inf2" onclick="toggleDS('m2inf',1,this)">
+                    <span class="lang-ru">Инфляция</span><span class="lang-en hidden">Inflation</span>
+                </button>
+                <button class="toggle-btn on" id="btn-tr3" onclick="toggleTrend('m2inf',this)">
+                    <span class="lang-ru">Линия тренда M2</span><span class="lang-en hidden">M2 Trendline</span>
+                </button>
+            </div>
+        </div>
+        <div class="chart-wrap" style="position:relative;height:300px;">
+            <canvas id="m2inflChart"></canvas>
+        </div>
+        <div class="mt-3 p-3 bg-slate-50 border border-slate-200 text-xs text-slate-700">
+            <strong class="lang-ru">Количественная теория денег (MV = PQ):</strong>
+            <strong class="lang-en hidden">Quantity Theory of Money (MV = PQ):</strong>
+            <span class="lang-ru"> Рост M2 опережал инфляцию в периоды расширения (2010–2015, ~15% vs 6%): избыточная ликвидность абсорбировалась реальным ростом. В кризисных периодах (2005–2006, 2008) синхронный рост M2 и инфляции указывает на монетарную природу ценового давления. Источник: Bank Indonesia.</span>
+            <span class="lang-en hidden"> M2 growth exceeded inflation during expansions (2010–2015, ~15% vs 6%): excess liquidity was absorbed by real growth. During crises (2005–2006, 2008) synchronized M2 and inflation growth indicates monetary origin of price pressure. Source: Bank Indonesia.</span>
+        </div>
+    </section>
+
+    <section class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 border-b border-slate-200 pb-4">
+            <div>
+                <h2 class="text-xl font-bold text-slate-800">
+                    <span class="lang-ru">IIc. ВВП и Коэффициент монетизации экономики M2/ВВП (2000–2024)</span>
+                    <span class="lang-en hidden">IIc. GDP Growth & Monetization Ratio M2/GDP (2000–2024)</span>
+                </h2>
+                <p class="text-xs text-slate-500 mt-1 lang-ru">Коэффициент монетизации = M2 / ВВП × 100%. Показывает глубину финансовой системы. Источник: World Bank (FM.LBL.BMNY.GD.ZS)</p>
+                <p class="text-xs text-slate-500 mt-1 lang-en hidden">Monetization ratio = M2 / GDP × 100%. Measures financial system depth. Source: World Bank (FM.LBL.BMNY.GD.ZS)</p>
+            </div>
+            <div class="flex flex-wrap gap-2 no-print">
+                <button class="toggle-btn on" id="btn-gdp3" onclick="toggleDS('monet',0,this)">
+                    <span class="lang-ru">Рост ВВП</span><span class="lang-en hidden">GDP Growth</span>
+                </button>
+                <button class="toggle-btn on" id="btn-mon" onclick="toggleDS('monet',1,this)">M2/GDP %</button>
+                <button class="toggle-btn on" id="btn-tr4" onclick="toggleTrend('monet',this)">
+                    <span class="lang-ru">Тренд M2/ВВП</span><span class="lang-en hidden">M2/GDP Trend</span>
+                </button>
+            </div>
+        </div>
+        <div class="chart-wrap" style="position:relative;height:300px;">
+            <canvas id="monetChart"></canvas>
+        </div>
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-slate-50 border border-slate-200 p-3">
+                <div class="text-lg font-bold text-blue-900">38%</div>
+                <div class="text-xs font-semibold text-slate-700 lang-ru">M2/ВВП в 2000 г. — низкая финансовая глубина</div>
+                <div class="text-xs font-semibold text-slate-700 lang-en hidden">M2/GDP in 2000 — low financial depth</div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 p-3">
+                <div class="text-lg font-bold text-green-700">40%+</div>
+                <div class="text-xs font-semibold text-slate-700 lang-ru">M2/ВВП с 2020 г. — рост финансовой инклюзивности</div>
+                <div class="text-xs font-semibold text-slate-700 lang-en hidden">M2/GDP since 2020 — growing financial inclusion</div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 p-3">
+                <div class="text-lg font-bold text-amber-700">+0.52</div>
+                <div class="text-xs font-semibold text-slate-700 lang-ru">Корреляция M2/ВВП и роста ВВП — умеренно положительная</div>
+                <div class="text-xs font-semibold text-slate-700 lang-en hidden">Correlation M2/GDP — GDP Growth: moderately positive</div>
+            </div>
+        </div>
+        <div class="mt-3 p-3 bg-slate-50 border border-slate-200 text-xs text-slate-700">
+            <strong class="lang-ru">Интерпретация:</strong>
+            <strong class="lang-en hidden">Interpretation:</strong>
+            <span class="lang-ru"> Рост коэффициента монетизации с ~38% (2000) до ~43% (2024) свидетельствует об углублении финансовой системы Индонезии. Это положительно коррелирует с ростом ВВП: более развитая финансовая система обеспечивает лучшее распределение капитала, кредитования и инвестиций. Индонезия остаётся ниже среднего уровня АСЕАН (~90–100%), что указывает на потенциал дальнейшего развития.</span>
+            <span class="lang-en hidden"> The rise in monetization ratio from ~38% (2000) to ~43% (2024) indicates deepening of Indonesia's financial system. This positively correlates with GDP growth: a more developed financial system enables better capital allocation, credit access, and investment. Indonesia remains below the ASEAN average (~90–100%), indicating further development potential.</span>
+        </div>
+    </section>
+
+</div>
+
+<!-- ====================================================================== -->
+<!-- SECTION III: AD-AS EQUILIBRIUM                                           -->
+<!-- ====================================================================== -->
+<span class="print-section-label lang-ru print-page-break">III. Графики экономического равновесия AD–AS</span>
+<span class="print-section-label lang-en hidden print-page-break">III. AD–AS Economic Equilibrium Diagrams</span>
+
+<div id="tab-equilibrium" class="tab-content">
+
+    <section class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+        <h2 class="text-xl font-bold text-slate-800 mb-1">
+            <span class="lang-ru">III. Графики экономического равновесия: модель AD–AS</span>
+            <span class="lang-en hidden">III. Economic Equilibrium: AD–AS Model</span>
+        </h2>
+        <p class="text-xs text-slate-500 mb-5 lang-ru">Взаимодействие совокупного спроса (AD) и совокупного предложения (AS) в кейнсианской и неоклассической моделях</p>
+        <p class="text-xs text-slate-500 mb-5 lang-en hidden">Aggregate Demand (AD) and Aggregate Supply (AS) interaction in Keynesian and Neoclassical models</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 equilibrium-grid">
+
+            <!-- Keynesian -->
+            <div>
+                <h3 class="text-base font-bold text-slate-800 mb-1 border-b border-slate-200 pb-1">
+                    <span class="lang-ru">A. Кейнсианская модель (краткосрочная)</span>
+                    <span class="lang-en hidden">A. Keynesian Model (Short-Run)</span>
+                </h3>
+                <canvas id="keynesianCanvas" class="adas-canvas" style="height:300px;"></canvas>
+                <div class="mt-3 space-y-1.5 text-xs text-slate-600">
+                    <p><span class="font-bold text-blue-700">AD</span><span class="lang-ru"> — совокупный спрос: убывающая кривая. Рост уровня цен (P) снижает реальный доход и спрос.</span><span class="lang-en hidden"> — Aggregate Demand: downward sloping. Higher price level (P) reduces real income and demand.</span></p>
+                    <p><span class="font-bold text-green-700">AS<sub>K</sub></span><span class="lang-ru"> — кейнсианское совокупное предложение: горизонтальная линия. Цены жёсткие в краткосрочном периоде.</span><span class="lang-en hidden"> — Keynesian AS: horizontal line. Prices are rigid/sticky in the short run.</span></p>
+                    <p><span class="font-bold text-red-600">E</span><span class="lang-ru"> — равновесие достигается при Y* &lt; Y<sub>p</sub>. Разрыв Y*→Y<sub>p</sub> = рецессионный разрыв выпуска (output gap). Возможна вынужденная безработица.</span><span class="lang-en hidden"> — Equilibrium at Y* &lt; Y<sub>p</sub>. The gap Y*→Y<sub>p</sub> = recessionary output gap. Involuntary unemployment possible.</span></p>
+                    <p class="font-semibold text-slate-700 lang-ru">Вывод: Государство должно активно стимулировать AD для достижения полной занятости.</p>
+                    <p class="font-semibold text-slate-700 lang-en hidden">Conclusion: Government must actively stimulate AD to achieve full employment.</p>
+                </div>
+            </div>
+
+            <!-- Neoclassical -->
+            <div>
+                <h3 class="text-base font-bold text-slate-800 mb-1 border-b border-slate-200 pb-1">
+                    <span class="lang-ru">B. Неоклассическая модель (долгосрочная)</span>
+                    <span class="lang-en hidden">B. Neoclassical Model (Long-Run)</span>
+                </h3>
+                <canvas id="neoclassicalCanvas" class="adas-canvas" style="height:300px;"></canvas>
+                <div class="mt-3 space-y-1.5 text-xs text-slate-600">
+                    <p><span class="font-bold text-blue-700">AD</span><span class="lang-ru"> — совокупный спрос: убывающая кривая (аналогично кейнсианской модели).</span><span class="lang-en hidden"> — Aggregate Demand: downward sloping (same as Keynesian).</span></p>
+                    <p><span class="font-bold text-green-700">SRAS</span><span class="lang-ru"> — краткосрочное предложение: возрастающая кривая. Рост цен стимулирует производство в краткосрочном периоде.</span><span class="lang-en hidden"> — Short-Run AS: upward sloping. Higher prices incentivize more output in the short run.</span></p>
+                    <p><span class="font-bold text-purple-700">LRAS</span><span class="lang-ru"> — долгосрочное предложение: вертикальная линия на уровне потенциального ВВП (Y<sub>p</sub>). Цены гибкие; экономика всегда стремится к Y<sub>p</sub>.</span><span class="lang-en hidden"> — Long-Run AS: vertical at potential GDP (Y<sub>p</sub>). Prices are flexible; economy always gravitates to Y<sub>p</sub>.</span></p>
+                    <p><span class="font-bold text-red-600">E</span><span class="lang-ru"> — долгосрочное равновесие: тройное пересечение AD, SRAS и LRAS. Рынок саморегулируется.</span><span class="lang-en hidden"> — Long-run equilibrium: triple intersection of AD, SRAS, LRAS. Market self-corrects.</span></p>
+                    <p class="font-semibold text-slate-700 lang-ru">Вывод: В долгосрочном периоде государственное вмешательство только влияет на уровень цен, но не на реальный ВВП.</p>
+                    <p class="font-semibold text-slate-700 lang-en hidden">Conclusion: In the long run, government intervention only affects the price level, not real GDP.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Table -->
+    <section class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+        <h3 class="text-base font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">
+            <span class="lang-ru">Сравнительный анализ: Кейнсианская модель и Неоклассическая модель</span>
+            <span class="lang-en hidden">Comparative Analysis: Keynesian Model vs. Neoclassical Model</span>
+        </h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left border-collapse">
+                <thead class="bg-slate-100 text-slate-700 border-b border-slate-300">
+                    <tr>
+                        <th class="px-3 py-2 font-semibold border border-slate-200 w-1/4"><span class="lang-ru">Критерий</span><span class="lang-en hidden">Criterion</span></th>
+                        <th class="px-3 py-2 font-semibold border border-slate-200 text-green-800"><span class="lang-ru">Кейнсианская</span><span class="lang-en hidden">Keynesian</span></th>
+                        <th class="px-3 py-2 font-semibold border border-slate-200 text-purple-800"><span class="lang-ru">Неоклассическая</span><span class="lang-en hidden">Neoclassical</span></th>
+                    </tr>
+                </thead>
+                <tbody class="text-slate-600 divide-y divide-slate-100">
+                    <tr>
+                        <td class="px-3 py-2 border border-slate-200 font-medium lang-ru">Временной горизонт</td>
+                        <td class="px-3 py-2 border border-slate-200 font-medium lang-en hidden">Time horizon</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-ru">Краткосрочный</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-ru">Долгосрочный</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-en hidden">Short-run</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-en hidden">Long-run</td>
+                    </tr>
+                    <tr>
+                        <td class="px-3 py-2 border border-slate-200 font-medium lang-ru">Цены и заработная плата</td>
+                        <td class="px-3 py-2 border border-slate-200 font-medium lang-en hidden">Prices & wages</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-ru">Жёсткие (sticky)</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-ru">Гибкие</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-en hidden">Sticky / rigid</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-en hidden">Flexible</td>
+                    </tr>
+                    <tr>
+                        <td class="px-3 py-2 border border-slate-200 font-medium lang-ru">Безработица</td>
+                        <td class="px-3 py-2 border border-slate-200 font-medium lang-en hidden">Unemployment</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-ru">Вынужденная — возможна</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-ru">Только естественный уровень</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-en hidden">Involuntary — possible</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-en hidden">Only natural rate</td>
+                    </tr>
+                    <tr>
+                        <td class="px-3 py-2 border border-slate-200 font-medium lang-ru">Форма кривой AS</td>
+                        <td class="px-3 py-2 border border-slate-200 font-medium lang-en hidden">AS curve shape</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-ru">Горизонтальная (жёсткие цены)</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-ru">Вертикальная в долгосрочном (LRAS); возрастающая в краткосрочном (SRAS)</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-en hidden">Horizontal (sticky prices)</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-en hidden">Vertical in LR (LRAS); upward-sloping in SR (SRAS)</td>
+                    </tr>
+                    <tr>
+                        <td class="px-3 py-2 border border-slate-200 font-medium lang-ru">Роль государства</td>
+                        <td class="px-3 py-2 border border-slate-200 font-medium lang-en hidden">Government role</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-ru">Активная — стимулирование AD</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-ru">Пассивная — рынок саморегулируется</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-en hidden">Active — stimulate AD</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-en hidden">Passive — market self-corrects</td>
+                    </tr>
+                    <tr>
+                        <td class="px-3 py-2 border border-slate-200 font-medium lang-ru">Применение к Индонезии</td>
+                        <td class="px-3 py-2 border border-slate-200 font-medium lang-en hidden">Indonesia context</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-ru">Кризис COVID-19 (2020): фискальные стимулы, снижение ставки ЦБ</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-ru">Стабилизация 2010–2019: рыночная саморегуляция, таргетирование инфляции</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-en hidden">COVID-19 (2020): fiscal stimulus, rate cuts</td>
+                        <td class="px-3 py-2 border border-slate-200 lang-en hidden">Stabilization 2010–2019: market self-regulation, inflation targeting</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Indonesia AD-AS Case Study -->
+    <section class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+        <h3 class="text-base font-bold text-slate-800 mb-1 border-b border-slate-200 pb-2">
+            <span class="lang-ru">C. Применение модели AD–AS к случаю Индонезии: три ключевых эпизода</span>
+            <span class="lang-en hidden">C. AD–AS Model Applied to Indonesia: Three Key Episodes</span>
+        </h3>
+        <p class="text-xs text-slate-500 mb-5 lang-ru">Как реальные макроэкономические шоки смещали кривые AD и AS в экономике Индонезии</p>
+        <p class="text-xs text-slate-500 mb-5 lang-en hidden">How real macroeconomic shocks shifted AD and AS curves in the Indonesian economy</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 episode-grid">
+            <!-- Episode 1 -->
+            <div class="border border-slate-200 p-4">
+                <div class="text-xs font-bold text-white bg-amber-700 px-2 py-1 mb-3 inline-block">
+                    <span class="lang-ru">Эпизод 1: 2005–2006 — Шок предложения</span>
+                    <span class="lang-en hidden">Episode 1: 2005–2006 — Supply Shock</span>
+                </div>
+                <canvas id="adasCase1" class="adas-canvas w-full" style="height:200px;"></canvas>
+                <div class="mt-3 space-y-1.5 text-xs text-slate-600">
+                    <p class="lang-ru"><span class="font-bold text-orange-700">Событие:</span> Отмена субсидий на топливо → рост затрат производителей.</p>
+                    <p class="lang-en hidden"><span class="font-bold text-orange-700">Event:</span> Fuel subsidy removal → rising producer costs.</p>
+                    <p class="lang-ru"><span class="font-bold text-green-700">Эффект AS:</span> Кривая AS сдвигается влево (AS → AS'). Предложение сокращается при любом уровне цен.</p>
+                    <p class="lang-en hidden"><span class="font-bold text-green-700">AS Effect:</span> AS curve shifts left (AS → AS'). Supply contracts at every price level.</p>
+                    <p class="lang-ru"><span class="font-bold text-red-700">Результат:</span> P растёт (инфляция 13,1%), Y снижается. Стагфляционный характер.</p>
+                    <p class="lang-en hidden"><span class="font-bold text-red-700">Result:</span> P rises (inflation 13.1%), Y falls. Stagflationary character.</p>
+                    <p class="lang-ru"><span class="font-bold text-blue-700">Ответ ЦБ:</span> BI поднял ставку до 12,75% — сдвиг AD влево для охлаждения инфляции.</p>
+                    <p class="lang-en hidden"><span class="font-bold text-blue-700">BI Response:</span> BI raised rate to 12.75% — shifting AD left to cool inflation.</p>
+                </div>
+            </div>
+            <!-- Episode 2 -->
+            <div class="border border-slate-200 p-4">
+                <div class="text-xs font-bold text-white bg-red-800 px-2 py-1 mb-3 inline-block">
+                    <span class="lang-ru">Эпизод 2: 2020 — Шок спроса (COVID-19)</span>
+                    <span class="lang-en hidden">Episode 2: 2020 — Demand Shock (COVID-19)</span>
+                </div>
+                <canvas id="adasCase2" class="adas-canvas w-full" style="height:200px;"></canvas>
+                <div class="mt-3 space-y-1.5 text-xs text-slate-600">
+                    <p class="lang-ru"><span class="font-bold text-orange-700">Событие:</span> Пандемия → локдауны, коллапс потребления и инвестиций.</p>
+                    <p class="lang-en hidden"><span class="font-bold text-orange-700">Event:</span> Pandemic → lockdowns, collapse of consumption and investment.</p>
+                    <p class="lang-ru"><span class="font-bold text-blue-700">Эффект AD:</span> Резкий сдвиг AD влево (AD → AD'). Выпуск падает ниже потенциала.</p>
+                    <p class="lang-en hidden"><span class="font-bold text-blue-700">AD Effect:</span> Sharp left shift of AD (AD → AD'). Output falls below potential.</p>
+                    <p class="lang-ru"><span class="font-bold text-red-700">Результат:</span> ВВП −2,1%. Первая рецессия с 1998 года. Дефляционное давление.</p>
+                    <p class="lang-en hidden"><span class="font-bold text-red-700">Result:</span> GDP −2.1%. First recession since 1998. Deflationary pressure.</p>
+                    <p class="lang-ru"><span class="font-bold text-green-700">Ответ:</span> Фискальный стимул (Kartu Prakerja, BLT) + BI снизил ставку до 3,5%.</p>
+                    <p class="lang-en hidden"><span class="font-bold text-green-700">Response:</span> Fiscal stimulus (Kartu Prakerja, BLT) + BI cut rate to 3.5%.</p>
+                </div>
+            </div>
+            <!-- Episode 3 -->
+            <div class="border border-slate-200 p-4">
+                <div class="text-xs font-bold text-white bg-blue-800 px-2 py-1 mb-3 inline-block">
+                    <span class="lang-ru">Эпизод 3: 2021–2024 — Восстановление</span>
+                    <span class="lang-en hidden">Episode 3: 2021–2024 — Recovery</span>
+                </div>
+                <canvas id="adasCase3" class="adas-canvas w-full" style="height:200px;"></canvas>
+                <div class="mt-3 space-y-1.5 text-xs text-slate-600">
+                    <p class="lang-ru"><span class="font-bold text-orange-700">Событие:</span> Вакцинация, снятие ограничений, рост экспорта сырья.</p>
+                    <p class="lang-en hidden"><span class="font-bold text-orange-700">Event:</span> Vaccination, reopening, commodity export boom.</p>
+                    <p class="lang-ru"><span class="font-bold text-blue-700">Эффект AD:</span> AD сдвигается вправо (AD' → AD''). Восстановление спроса.</p>
+                    <p class="lang-en hidden"><span class="font-bold text-blue-700">AD Effect:</span> AD shifts right (AD' → AD''). Demand recovery.</p>
+                    <p class="lang-ru"><span class="font-bold text-red-700">Результат:</span> ВВП возвращается к ~5%. Умеренный рост инфляции (4,2% в 2022 г.).</p>
+                    <p class="lang-en hidden"><span class="font-bold text-red-700">Result:</span> GDP returns to ~5%. Moderate inflation rise (4.2% in 2022).</p>
+                    <p class="lang-ru"><span class="font-bold text-green-700">Долгосрочно:</span> AS также сдвигается вправо за счёт структурных реформ (Omnibus Law).</p>
+                    <p class="lang-en hidden"><span class="font-bold text-green-700">Long-run:</span> AS also shifts right via structural reforms (Omnibus Law).</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<!-- ====================================================================== -->
+<!-- SECTION IV: ANALYSIS                                                     -->
+<!-- ====================================================================== -->
+<span class="print-section-label lang-ru print-page-break">IV. Макроэкономический анализ (2000–2025)</span>
+<span class="print-section-label lang-en hidden print-page-break">IV. Macroeconomic Analysis (2000–2025)</span>
+
+<div id="tab-analysis" class="tab-content">
+
+    <section class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+        <h2 class="text-xl font-bold text-slate-800 mb-5 border-b border-slate-200 pb-2">
+            <span class="lang-ru">IV. Макроэкономический анализ (2000–2025)</span>
+            <span class="lang-en hidden">IV. Macroeconomic Analysis (2000–2025)</span>
+        </h2>
+
+        <div class="space-y-8">
+
+            <div>
+                <h4 class="text-sm font-bold text-slate-800 mb-3 lang-ru">1. Статистика и матрица корреляций</h4>
+                <h4 class="text-sm font-bold text-slate-800 mb-3 lang-en hidden">1. Statistics and Correlation Matrix</h4>
+                <p class="text-xs text-slate-700 mb-3 lang-ru">Средний рост ВВП составил 4,88% (умеренная волатильность, σ = 1,57). Средняя инфляция — 5,66% (высокая волатильность, σ = 3,25 вследствие внешних шоков). Средняя безработица — 7,08% (σ = 1,85, изменения связаны с кризисами). Инфляция и безработица имеют сильную положительную корреляцию (r = 0,76), тогда как рост ВВП слабо коррелирует с безработицей (r = 0,04).</p>
+                <p class="text-xs text-slate-700 mb-3 lang-en hidden">Average GDP growth was 4.88% (moderate volatility, σ = 1.57). Average inflation 5.66% (high volatility, σ = 3.25 from external shocks). Average unemployment 7.08% (σ = 1.85, crisis-driven changes). Inflation and unemployment show strong positive correlation (r = 0.76), while GDP growth has weak correlation with unemployment (r = 0.04).</p>
+            </div>
+
+            <div>
+                <h4 class="text-sm font-bold text-slate-800 mb-3 lang-ru">2. Регрессионная модель безработицы</h4>
+                <h4 class="text-sm font-bold text-slate-800 mb-3 lang-en hidden">2. Unemployment Regression Model</h4>
+                <div class="bg-slate-50 p-3 border border-slate-200 text-center italic text-slate-800 text-xs font-serif mb-3">
+                    Unemployment<sub>t</sub> = β<sub>0</sub> + β<sub>1</sub> · GDP<sub>t</sub> + β<sub>2</sub> · Inflation<sub>t</sub> + ε<sub>t</sub>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left border-collapse mb-3">
+                        <thead class="bg-slate-100 text-slate-700 border-b border-slate-300">
+                            <tr>
+                                <th class="px-3 py-2 border border-slate-200 font-semibold"><span class="lang-ru">Переменная</span><span class="lang-en hidden">Variable</span></th>
+                                <th class="px-3 py-2 border border-slate-200 font-semibold"><span class="lang-ru">Коэффициент</span><span class="lang-en hidden">Coefficient</span></th>
+                                <th class="px-3 py-2 border border-slate-200 font-semibold">P&gt;|t|</th>
+                                <th class="px-3 py-2 border border-slate-200 font-semibold"><span class="lang-ru">Интерпретация</span><span class="lang-en hidden">Interpretation</span></th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-700 divide-y divide-slate-100">
+                            <tr><td class="px-3 py-2 border border-slate-200 font-medium"><span class="lang-ru">Константа</span><span class="lang-en hidden">Constant</span></td><td class="px-3 py-2 border border-slate-200">5.34</td><td class="px-3 py-2 border border-slate-200">0.000</td><td class="px-3 py-2 border border-slate-200"><span class="lang-ru">Базовый уровень безработицы</span><span class="lang-en hidden">Baseline unemployment level</span></td></tr>
+                            <tr class="bg-slate-50"><td class="px-3 py-2 border border-slate-200 font-medium"><span class="lang-ru">Рост ВВП</span><span class="lang-en hidden">GDP Growth</span></td><td class="px-3 py-2 border border-slate-200">−0.165</td><td class="px-3 py-2 border border-slate-200">0.313</td><td class="px-3 py-2 border border-slate-200"><span class="lang-ru">Отрицательный, статистически незначимый</span><span class="lang-en hidden">Negative but not significant</span></td></tr>
+                            <tr><td class="px-3 py-2 border border-slate-200 font-medium"><span class="lang-ru">Инфляция</span><span class="lang-en hidden">Inflation</span></td><td class="px-3 py-2 border border-slate-200">+0.450</td><td class="px-3 py-2 border border-slate-200">0.000</td><td class="px-3 py-2 border border-slate-200"><span class="lang-ru">Положительный, высоко значимый</span><span class="lang-en hidden">Positive and highly significant</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-xs text-slate-700 lang-ru"><strong>R² = 0.596:</strong> Модель объясняет ~60% дисперсии безработицы. Инфляция является главным статистически значимым фактором. Рост ВВП сам по себе не оказывает надёжного прямого воздействия на безработицу.</p>
+                <p class="text-xs text-slate-700 lang-en hidden"><strong>R² = 0.596:</strong> Model explains ~60% of unemployment variance. Inflation is the main statistically significant driver. GDP growth alone does not have a reliable direct effect on unemployment.</p>
+            </div>
+
+            <div>
+                <h4 class="text-sm font-bold text-slate-800 mb-3 lang-ru">3. Ключевые экономические связи</h4>
+                <h4 class="text-sm font-bold text-slate-800 mb-3 lang-en hidden">3. Key Economic Relationships</h4>
+                <div class="space-y-3">
+                    <div class="border-l-4 border-blue-700 pl-3">
+                        <p class="font-semibold text-xs text-slate-800 lang-ru">Закон Оукена: ВВП и безработица</p>
+                        <p class="font-semibold text-xs text-slate-800 lang-en hidden">Okun's Law: GDP and Unemployment</p>
+                        <p class="text-xs text-slate-600 lang-ru">В периоды высокого роста (2010–2012 гг.) безработица снижалась. Рецессия 2020 г. немедленно увеличила безработицу на 1,9 п.п. Связь прослеживается, однако коэффициент корреляции (0,04) невысок из-за структурных особенностей рынка труда Индонезии (неформальный сектор).</p>
+                        <p class="text-xs text-slate-600 lang-en hidden">During high-growth periods (2010–2012) unemployment declined. The 2020 recession increased unemployment by 1.9 pp immediately. The relationship exists but the correlation (0.04) is weak due to Indonesia's informal labor market structure.</p>
+                    </div>
+                    <div class="border-l-4 border-red-600 pl-3">
+                        <p class="font-semibold text-xs text-slate-800 lang-ru">Инфляция и безработица: шоки предложения</p>
+                        <p class="font-semibold text-xs text-slate-800 lang-en hidden">Inflation and Unemployment: Supply Shocks</p>
+                        <p class="text-xs text-slate-600 lang-ru">В 2005–2006 гг. инфляция (13,1%) и безработица (10–11%) росли одновременно — классический признак инфляции издержек, а не спроса. Это опровергает простую кривую Филлипса для Индонезии.</p>
+                        <p class="text-xs text-slate-600 lang-en hidden">In 2005–2006, inflation (13.1%) and unemployment (10–11%) rose simultaneously — classic cost-push inflation, not demand-pull. This contradicts the simple Phillips curve for Indonesia.</p>
+                    </div>
+                    <div class="border-l-4 border-green-700 pl-3">
+                        <p class="font-semibold text-xs text-slate-800 lang-ru">Долгосрочный структурный тренд (2000–2025)</p>
+                        <p class="font-semibold text-xs text-slate-800 lang-en hidden">Long-Term Structural Trend (2000–2025)</p>
+                        <p class="text-xs text-slate-600 lang-ru">За 25 лет прослеживается три ключевых улучшения: инфляция снизилась с двузначных значений до 2–3%; безработица сократилась с более чем 10% до менее 5%; рост ВВП стабилизировался на уровне ~5%. Индонезия перешла от нестабильной к более зрелой развивающейся экономике.</p>
+                        <p class="text-xs text-slate-600 lang-en hidden">Over 25 years, three key improvements are evident: inflation fell from double-digit to 2–3%; unemployment dropped from over 10% to below 5%; GDP growth stabilized at ~5%. Indonesia transitioned from a volatile to a more mature emerging market.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-100 p-5 border-l-4 border-slate-800">
+                <h5 class="font-bold text-slate-900 mb-3 text-sm lang-ru">Общие выводы</h5>
+                <h5 class="font-bold text-slate-900 mb-3 text-sm lang-en hidden">Overall Conclusions</h5>
+                <ul class="text-xs text-slate-700 space-y-2 list-disc list-inside lang-ru">
+                    <li>Экономика Индонезии демонстрирует умеренный рост (~4,88%), исторически нестабильную инфляцию (5,66%) и постепенно снижающуюся безработицу (7,08%).</li>
+                    <li>Инфляционные шоки (2005–2006, 2008) исторически создавали наибольшую угрозу для рынка труда.</li>
+                    <li>Рост ВВП в отрыве от ценовой стабильности не обеспечивает надёжного снижения безработицы.</li>
+                    <li>Доверие к политике Банка Индонезии (таргетирование инфляции) является ключевым фактором макроэкономической стабильности.</li>
+                </ul>
+                <ul class="text-xs text-slate-700 space-y-2 list-disc list-inside lang-en hidden">
+                    <li>Indonesia shows moderate growth (~4.88%), historically volatile inflation (5.66%), and gradually declining unemployment (7.08%).</li>
+                    <li>Inflation shocks (2005–2006, 2008) historically posed the greatest labor market threat.</li>
+                    <li>GDP growth alone without price stability does not reliably reduce unemployment.</li>
+                    <li>Bank Indonesia's credibility in inflation targeting is the key macroeconomic stability factor.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- ====================================================================== -->
+<!-- SECTION V: RAW DATA                                                      -->
+<!-- ====================================================================== -->
+<span class="print-section-label lang-ru print-page-break">V. Исходные данные и методология</span>
+<span class="print-section-label lang-en hidden print-page-break">V. Raw Data & Methodology</span>
+
+<div id="tab-data" class="tab-content">
+
+    <section class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+        <h2 class="text-xl font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">
+            <span class="lang-ru">V. Исходные данные и методология</span>
+            <span class="lang-en hidden">V. Raw Data & Methodology</span>
+        </h2>
+        <div class="overflow-x-auto mb-6">
+            <table class="w-full text-xs text-center border-collapse bg-white">
+                <thead class="bg-slate-100 text-slate-700 border-b border-slate-300">
+                    <tr>
+                        <th class="px-3 py-2 font-semibold border border-slate-200"><span class="lang-ru">Год</span><span class="lang-en hidden">Year</span></th>
+                        <th class="px-3 py-2 font-semibold border border-slate-200"><span class="lang-ru">Рост ВВП (%)</span><span class="lang-en hidden">GDP Growth (%)</span></th>
+                        <th class="px-3 py-2 font-semibold border border-slate-200"><span class="lang-ru">Инфляция (%)</span><span class="lang-en hidden">Inflation (%)</span></th>
+                        <th class="px-3 py-2 font-semibold border border-slate-200"><span class="lang-ru">Безработица (%)</span><span class="lang-en hidden">Unemployment (%)</span></th>
+                        <th class="px-3 py-2 font-semibold border border-slate-200"><span class="lang-ru">Ставка ЦБ (%)</span><span class="lang-en hidden">Policy Rate (%)</span></th>
+                        <th class="px-3 py-2 font-semibold border border-slate-200"><span class="lang-ru">Рост M2 (%)</span><span class="lang-en hidden">M2 Growth (%)</span></th>
+                        <th class="px-3 py-2 font-semibold border border-slate-200"><span class="lang-ru">M2/ВВП (%)</span><span class="lang-en hidden">M2/GDP (%)</span></th>
+                    </tr>
+                </thead>
+                <tbody id="rawDataTableBody" class="text-slate-600"></tbody>
+            </table>
+        </div>
+        <div class="bg-slate-50 border border-slate-200 p-5">
+            <h4 class="font-bold text-slate-800 mb-3 text-sm lang-ru">Источники данных и методология</h4>
+            <h4 class="font-bold text-slate-800 mb-3 text-sm lang-en hidden">Data Sources & Methodology</h4>
+            <ul class="text-xs text-slate-700 space-y-2 lang-ru">
+                <li><span class="font-semibold">Рост ВВП и инфляция:</span> Всемирный банк (World Bank Open Data, indicator NY.GDP.MKTP.KD.ZG и FP.CPI.TOTL.ZG).</li>
+                <li><span class="font-semibold">Безработица:</span> Badan Pusat Statistik (BPS) — Национальное обследование рабочей силы (Sakernas).</li>
+                <li><span class="font-semibold">Ставка ЦБ:</span> Bank Indonesia — BI Rate (до 2016 г.) / BI 7-Day Reverse Repo Rate (с 2016 г.).</li>
+                <li><span class="font-semibold">Рост денежной массы M2:</span> Bank Indonesia — статистика денежного обращения (годовой прирост M2, %).</li>
+                <li><span class="font-semibold">Коэффициент монетизации M2/ВВП:</span> Всемирный банк (World Bank indicator FM.LBL.BMNY.GD.ZS — Broad money as % of GDP).</li>
+                <li class="pt-2 border-t border-slate-200 text-slate-600">Данные BPS используются в качестве приоритетного источника по безработице, поскольку методология Sakernas точнее учитывает специфику неформального сектора экономики Индонезии по сравнению со стандартизированными международными моделями (МОТ / Всемирный банк).</li>
+            </ul>
+            <ul class="text-xs text-slate-700 space-y-2 lang-en hidden">
+                <li><span class="font-semibold">GDP Growth & Inflation:</span> World Bank Open Data (indicators NY.GDP.MKTP.KD.ZG and FP.CPI.TOTL.ZG).</li>
+                <li><span class="font-semibold">Unemployment:</span> Badan Pusat Statistik (BPS) — National Labor Force Survey (Sakernas).</li>
+                <li><span class="font-semibold">Policy Rate:</span> Bank Indonesia — BI Rate (pre-2016) / BI 7-Day Reverse Repo Rate (post-2016).</li>
+                <li><span class="font-semibold">M2 Money Supply Growth:</span> Bank Indonesia — monetary statistics (annual M2 growth, %).</li>
+                <li><span class="font-semibold">Monetization Ratio M2/GDP:</span> World Bank (indicator FM.LBL.BMNY.GD.ZS — Broad money as % of GDP).</li>
+                <li class="pt-2 border-t border-slate-200 text-slate-600">BPS data is prioritized for unemployment because the Sakernas methodology more accurately captures Indonesia's large informal economic sector compared to standardized international models (ILO / World Bank).</li>
+            </ul>
+        </div>
+    </section>
+</div>
+
+</main>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+// ==================== DATA ====================
+const years = [2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025];
+const gdpData       = [4.9,3.6,4.5,4.8,5,5.7,5.5,6.3,6,4.6,6.2,6.2,6,5.6,5,4.9,5,5.1,5.2,5,-2.1,3.7,5.3,5,5,5];
+const inflationData = [3.8,11.5,11.9,6.8,6.1,10.5,13.1,6.4,9.8,4.8,5.1,5.4,4.3,6.4,6.4,6.4,3.5,3.8,3.2,2.8,2,1.6,4.2,2.6,2.3,2.5];
+const unemployData  = [6.1,8.1,9.1,9.7,9.9,11.2,10.3,9.1,8.4,7.9,7.1,6.6,6.1,6.2,5.9,6.2,5.6,5.5,5.3,5.2,7.1,6.5,5.9,5.3,4.9,4.8];
+const rateData      = [14.5,17.5,13,8.5,7.4,8.5,9.75,8,9.25,6.5,6.5,6,5.75,7.5,7.75,7.5,4.75,4.25,6,5,3.75,3.5,5.5,6,6,5.75];
+
+const crisisYears = { 2005:'Krisis Inflasi BBM', 2006:'Krisis Inflasi BBM', 2008:'Global Financial Crisis', 2020:'Resesi COVID-19' };
+
+// ==================== TRENDLINE ====================
+function linreg(data) {
+    const n = data.length, xm = (n-1)/2;
+    const ym = data.reduce((a,b)=>a+b,0)/n;
+    let num=0,den=0;
+    data.forEach((y,i)=>{ num+=(i-xm)*(y-ym); den+=(i-xm)**2; });
+    const s=num/den, b=ym-s*xm;
+    return data.map((_,i)=>parseFloat((b+s*i).toFixed(3)));
+}
+const gdpTrend = linreg(gdpData);
+
+// ==================== CRISIS PLUGIN ====================
+const crisisPlugin = {
+    id:'crisisPlugin',
+    afterDraw(chart){
+        const ctx=chart.ctx, xs=chart.scales.x, ys=chart.scales.y||chart.scales['y'];
+        const crisisIdx=[5,8,20]; // 2005,2008,2020
+        crisisIdx.forEach(ci=>{
+            const x=xs.getPixelForValue(ci);
+            ctx.save();
+            ctx.setLineDash([5,4]);
+            ctx.strokeStyle='rgba(220,38,38,0.5)';
+            ctx.lineWidth=1.5;
+            ctx.beginPath(); ctx.moveTo(x,ys.top); ctx.lineTo(x,ys.bottom); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.beginPath(); ctx.arc(x,ys.top+7,4,0,Math.PI*2);
+            ctx.fillStyle='#dc2626'; ctx.fill();
+            ctx.restore();
+        });
+    }
+};
+
+// ==================== CHART DEFAULTS ====================
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = '#475569';
+
+// ==================== CHART 1: MACRO ====================
+const macroChart = new Chart(document.getElementById('macroChart').getContext('2d'), {
+    type:'line',
+    plugins:[crisisPlugin],
+    data:{
+        labels: years,
+        datasets:[
+            { label:'Рост ВВП (%)', data:gdpData, borderColor:'#1e40af', backgroundColor:'rgba(30,64,175,0.07)', borderWidth:2.5, tension:0.15, pointRadius:3, pointBackgroundColor:'#1e40af', fill:true },
+            { label:'Инфляция (%)', data:inflationData, borderColor:'#991b1b', backgroundColor:'transparent', borderWidth:2, tension:0.15, pointRadius:3, pointBackgroundColor:'#991b1b' },
+            { label:'Безработица (%)', data:unemployData, borderColor:'#475569', backgroundColor:'transparent', borderWidth:2, borderDash:[5,5], tension:0.15, pointRadius:3, pointBackgroundColor:'#475569' },
+            { label:'Линия тренда ВВП', data:gdpTrend, borderColor:'#7c3aed', backgroundColor:'transparent', borderWidth:1.5, borderDash:[8,4], tension:0, pointRadius:0, hidden:false }
+        ]
+    },
+    options:{
+        responsive:true, maintainAspectRatio:false,
+        interaction:{ mode:'index', intersect:false },
+        plugins:{
+            legend:{ position:'top', labels:{ boxWidth:14, usePointStyle:true } },
+            tooltip:{
+                backgroundColor:'rgba(15,23,42,0.92)', padding:12, cornerRadius:4,
+                callbacks:{
+                    afterTitle:items=>{
+                        const yr=years[items[0].dataIndex];
+                        return crisisYears[yr]||'';
+                    }
+                }
+            }
+        },
+        scales:{
+            y:{ title:{ display:true, text:'Percentage (%)', font:{weight:'600'} }, grid:{ color:'#e2e8f0' } },
+            x:{ grid:{ display:false } }
+        }
+    }
+});
+
+// ==================== CHART 2: INTEREST RATE OVERLAY ====================
+const interestChart = new Chart(document.getElementById('interestChart').getContext('2d'), {
+    type:'line',
+    plugins:[crisisPlugin],
+    data:{
+        labels:years,
+        datasets:[
+            { label:'Рост ВВП (%)', data:gdpData, borderColor:'#1e40af', backgroundColor:'rgba(30,64,175,0.07)', borderWidth:2.5, tension:0.15, pointRadius:3, pointBackgroundColor:'#1e40af', fill:true, yAxisID:'y' },
+            { label:'Ставка ЦБ (%)', data:rateData, borderColor:'#d97706', backgroundColor:'rgba(217,119,6,0.06)', borderWidth:2.5, tension:0.2, pointRadius:3, pointBackgroundColor:'#d97706', fill:false, yAxisID:'y2' },
+            { label:'Линия тренда ВВП', data:gdpTrend, borderColor:'#7c3aed', backgroundColor:'transparent', borderWidth:1.5, borderDash:[8,4], tension:0, pointRadius:0, hidden:false, yAxisID:'y' }
+        ]
+    },
+    options:{
+        responsive:true, maintainAspectRatio:false,
+        interaction:{ mode:'index', intersect:false },
+        plugins:{
+            legend:{ position:'top', labels:{ boxWidth:14, usePointStyle:true } },
+            tooltip:{ backgroundColor:'rgba(15,23,42,0.92)', padding:12, cornerRadius:4 }
+        },
+        scales:{
+            y:{ type:'linear', position:'left', title:{ display:true, text:'GDP Growth (%)', color:'#1e40af', font:{weight:'600'} }, grid:{ color:'#e2e8f0' } },
+            y2:{ type:'linear', position:'right', title:{ display:true, text:'Policy Rate (%)', color:'#d97706', font:{weight:'600'} }, grid:{ drawOnChartArea:false }, min:0, max:22 },
+            x:{ grid:{ display:false } }
+        }
+    }
+});
+
+// ==================== TOGGLE DATASET (show/hide line) ====================
+function toggleDS(chartName, idx, btn) {
+    const chart = chartMap[chartName] || (chartName === 'macro' ? macroChart : interestChart);
+    const meta = chart.getDatasetMeta(idx);
+    meta.hidden = !meta.hidden;
+    chart.update();
+    btn.classList.toggle('on');
+    btn.classList.toggle('off');
+}
+
+// ==================== TOGGLE TRENDLINE ====================
+function toggleTrend(chartName, btn) {
+    const chart = chartMap[chartName];
+    const idx = trendIdxMap[chartName] ?? 3;
+    const meta = chart.getDatasetMeta(idx);
+    meta.hidden = !meta.hidden;
+    chart.update();
+    btn.classList.toggle('on');
+    btn.classList.toggle('off');
+}
+
+// ==================== TAB NAVIGATION ====================
+const tabIds = ['tab-macro','tab-interest','tab-equilibrium','tab-analysis','tab-data'];
+function showTab(id) {
+    tabIds.forEach(t => document.getElementById(t).classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.section-tab').forEach((btn,i) => {
+        btn.classList.toggle('active', tabIds[i] === id);
+    });
+    if (id === 'tab-equilibrium') setTimeout(() => { drawDiagrams(); drawAllEpisodes(); }, 30);
+}
+
+// ==================== M2 DATA (Bank Indonesia / World Bank) ====================
+// M2 YoY growth % — Bank Indonesia annual data
+const m2GrowthData = [15.6,13.0,4.7,8.1,8.1,16.3,14.9,19.3,14.9,12.9,15.4,16.4,15.0,16.0,11.9,8.9,10.0,10.0,8.3,6.5,12.4,12.7,8.6,5.9,6.6,6.0];
+// M2/GDP monetization ratio % — World Bank FM.LBL.BMNY.GD.ZS for Indonesia
+const monetRatioData = [38.2,40.5,40.3,39.8,38.7,37.0,36.8,36.3,35.8,37.5,36.8,35.4,36.3,37.1,37.8,38.8,39.3,39.5,38.6,38.7,47.7,46.5,43.6,40.8,42.5,43.0];
+
+const m2Trend    = linreg(m2GrowthData);
+const monetTrend = linreg(monetRatioData);
+
+// ==================== CHART: M2 GROWTH vs INFLATION ====================
+const m2inflChart = new Chart(document.getElementById('m2inflChart').getContext('2d'), {
+    type:'line',
+    plugins:[crisisPlugin],
+    data:{
+        labels: years,
+        datasets:[
+            { label:'M2 Growth (% YoY)', data:m2GrowthData, borderColor:'#0f766e', backgroundColor:'rgba(15,118,110,0.07)', borderWidth:2.5, tension:0.2, pointRadius:3, pointBackgroundColor:'#0f766e', fill:true },
+            { label:'Inflation (%)', data:inflationData, borderColor:'#991b1b', backgroundColor:'transparent', borderWidth:2, tension:0.15, pointRadius:3, pointBackgroundColor:'#991b1b', borderDash:[5,3] },
+            { label:'M2 Growth Trendline', data:m2Trend, borderColor:'#7c3aed', backgroundColor:'transparent', borderWidth:1.5, borderDash:[8,4], tension:0, pointRadius:0, hidden:false }
+        ]
+    },
+    options:{
+        responsive:true, maintainAspectRatio:false,
+        interaction:{ mode:'index', intersect:false },
+        plugins:{
+            legend:{ position:'top', labels:{ boxWidth:14, usePointStyle:true } },
+            tooltip:{ backgroundColor:'rgba(15,23,42,0.92)', padding:12, cornerRadius:4 }
+        },
+        scales:{
+            y:{ title:{ display:true, text:'Percentage (%)', font:{weight:'600'} }, grid:{ color:'#e2e8f0' } },
+            x:{ grid:{ display:false } }
+        }
+    }
+});
+
+// ==================== CHART: MONETIZATION RATIO vs GDP ====================
+const monetChart = new Chart(document.getElementById('monetChart').getContext('2d'), {
+    type:'line',
+    plugins:[crisisPlugin],
+    data:{
+        labels: years,
+        datasets:[
+            { label:'GDP Growth (%)', data:gdpData, borderColor:'#1e40af', backgroundColor:'rgba(30,64,175,0.07)', borderWidth:2.5, tension:0.15, pointRadius:3, pointBackgroundColor:'#1e40af', fill:true, yAxisID:'y' },
+            { label:'M2/GDP Ratio (%)', data:monetRatioData, borderColor:'#059669', backgroundColor:'rgba(5,150,105,0.07)', borderWidth:2.5, tension:0.2, pointRadius:3, pointBackgroundColor:'#059669', fill:false, yAxisID:'y2' },
+            { label:'M2/GDP Trendline', data:monetTrend, borderColor:'#7c3aed', backgroundColor:'transparent', borderWidth:1.5, borderDash:[8,4], tension:0, pointRadius:0, hidden:false, yAxisID:'y2' }
+        ]
+    },
+    options:{
+        responsive:true, maintainAspectRatio:false,
+        interaction:{ mode:'index', intersect:false },
+        plugins:{
+            legend:{ position:'top', labels:{ boxWidth:14, usePointStyle:true } },
+            tooltip:{ backgroundColor:'rgba(15,23,42,0.92)', padding:12, cornerRadius:4 }
+        },
+        scales:{
+            y:{ type:'linear', position:'left', title:{ display:true, text:'GDP Growth (%)', color:'#1e40af', font:{weight:'600'} }, grid:{ color:'#e2e8f0' } },
+            y2:{ type:'linear', position:'right', title:{ display:true, text:'M2/GDP (%)', color:'#059669', font:{weight:'600'} }, grid:{ drawOnChartArea:false }, min:30, max:55 },
+            x:{ grid:{ display:false } }
+        }
+    }
+});
+
+// ==================== TOGGLE: extend to new charts ====================
+const chartMap = {
+    macro: macroChart,
+    interest: interestChart,
+    m2inf: m2inflChart,
+    monet: monetChart
+};
+const trendIdxMap = { macro:3, interest:2, m2inf:2, monet:2 };
+
+
+let currentLang = 'ru';
+function toggleLanguage() {
+    currentLang = currentLang === 'ru' ? 'en' : 'ru';
+    document.querySelectorAll('.lang-ru').forEach(el => el.classList.toggle('hidden', currentLang !== 'ru'));
+    document.querySelectorAll('.lang-en').forEach(el => el.classList.toggle('hidden', currentLang !== 'en'));
+    // Update chart dataset labels
+    const macroLabels = currentLang === 'ru'
+        ? ['Рост ВВП (%)','Инфляция (%)','Безработица (%)','Линия тренда ВВП']
+        : ['GDP Growth (%)','Inflation (%)','Unemployment (%)','GDP Trendline'];
+    macroLabels.forEach((l,i) => { macroChart.data.datasets[i].label = l; });
+    const intLabels = currentLang === 'ru'
+        ? ['Рост ВВП (%)','Ставка ЦБ (%)','Линия тренда ВВП']
+        : ['GDP Growth (%)','Policy Rate (%)','GDP Trendline'];
+    intLabels.forEach((l,i) => { interestChart.data.datasets[i].label = l; });
+    macroChart.update();
+    interestChart.update();
+}
+
+// ==================== PRINT ====================
+function printReport() {
+    // Redraw all canvases at fixed print-friendly dimensions before printing.
+    // This prevents the "stretched" look caused by CSS resizing a canvas
+    // whose internal pixel buffer was set at screen size.
+
+    // 1. Main AD-AS (keynesian + neoclassical): fix to ~440px wide × 240px tall
+    const printW = 440, printH = 240;
+    ['keynesianCanvas','neoclassicalCanvas'].forEach(id => {
+        const c = document.getElementById(id);
+        if (!c) return;
+        c.width  = printW;
+        c.height = printH;
+        c.style.width  = printW + 'px';
+        c.style.height = printH + 'px';
+    });
+    drawDiagrams();
+
+    // 2. Episode canvases: fix to ~280px wide × 180px tall
+    const epW = 280, epH = 180;
+    ['adasCase1','adasCase2','adasCase3'].forEach(id => {
+        const c = document.getElementById(id);
+        if (!c) return;
+        c.width  = epW;
+        c.height = epH;
+        c.style.width  = epW + 'px';
+        c.style.height = epH + 'px';
+    });
+    drawAllEpisodes();
+
+    // Small delay to let canvas repaint flush before browser opens print dialog
+    setTimeout(() => window.print(), 120);
+}
+
+// ==================== RAW DATA TABLE ====================
+const tbody = document.getElementById('rawDataTableBody');
+years.forEach((yr,i) => {
+    const tr = document.createElement('tr');
+    tr.className = i % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+    const isCrisis = !!crisisYears[yr];
+    const m2val = i < m2GrowthData.length ? m2GrowthData[i] : '—';
+    const monval = i < monetRatioData.length ? monetRatioData[i] : '—';
+    tr.innerHTML = `
+        <td class="px-3 py-1.5 border border-slate-200 font-medium ${isCrisis?'text-red-700 font-bold':''}">${yr}${isCrisis?' *':''}</td>
+        <td class="px-3 py-1.5 border border-slate-200 ${gdpData[i]<0?'text-red-700 font-bold':''}">${gdpData[i]}</td>
+        <td class="px-3 py-1.5 border border-slate-200 ${inflationData[i]>9?'text-red-600 font-semibold':''}">${inflationData[i]}</td>
+        <td class="px-3 py-1.5 border border-slate-200">${unemployData[i]}</td>
+        <td class="px-3 py-1.5 border border-slate-200">${rateData[i]}</td>
+        <td class="px-3 py-1.5 border border-slate-200">${m2val}</td>
+        <td class="px-3 py-1.5 border border-slate-200">${monval}</td>
+    `;
+    tbody.appendChild(tr);
+});
+
+// ==================== AD-AS CANVAS DIAGRAMS ====================
+function drawDiagrams() { drawKeynesian(); drawNeoclassical(); }
+
+function setupCanvas(id) {
+    const canvas = document.getElementById(id);
+    const dpr = window.devicePixelRatio || 1;
+    // Use existing canvas.width/height if already set by printReport, else measure from layout
+    const w = (canvas.style.width ? parseInt(canvas.style.width) : null) || canvas.offsetWidth || 460;
+    const h = (canvas.style.height ? parseInt(canvas.style.height) : null) || 300;
+    canvas.width  = w * dpr;
+    canvas.height = h * dpr;
+    canvas.style.height = h + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    return { ctx, w, h };
+}
+
+function drawAxes(ctx, w, h, pad, yLabel, xLabel) {
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + pad.gh);
+    ctx.lineTo(pad.l + pad.gw, pad.t + pad.gh);
+    ctx.stroke();
+    // Arrowheads
+    ctx.beginPath();
+    ctx.moveTo(pad.l-4, pad.t+10); ctx.lineTo(pad.l, pad.t); ctx.lineTo(pad.l+4, pad.t+10);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(pad.l+pad.gw-10, pad.t+pad.gh-4); ctx.lineTo(pad.l+pad.gw, pad.t+pad.gh); ctx.lineTo(pad.l+pad.gw-10, pad.t+pad.gh+4);
+    ctx.stroke();
+    // Labels
+    ctx.fillStyle = '#475569'; ctx.font = '11px Inter'; ctx.textAlign = 'center';
+    ctx.save(); ctx.translate(14, pad.t + pad.gh/2); ctx.rotate(-Math.PI/2);
+    ctx.fillText(yLabel, 0, 0); ctx.restore();
+    ctx.fillText(xLabel, pad.l + pad.gw/2, h - 4);
+}
+
+function drawKeynesian() {
+    const { ctx, w, h } = setupCanvas('keynesianCanvas');
+    const pad = { l:52, r:24, t:24, b:42 };
+    pad.gw = w - pad.l - pad.r; pad.gh = h - pad.t - pad.b;
+
+    ctx.clearRect(0, 0, w, h);
+    drawAxes(ctx, w, h, pad, 'Price Level (P)', 'Real GDP (Y)');
+
+    const gw = pad.gw, gh = pad.gh, l = pad.l, t = pad.t;
+
+    // Keynesian AS: horizontal at 55% height
+    const asY = t + gh * 0.55;
+    ctx.strokeStyle = '#15803d'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(l + 8, asY); ctx.lineTo(l + gw * 0.82, asY); ctx.stroke();
+    ctx.fillStyle = '#15803d'; ctx.font = 'bold 11px Inter'; ctx.textAlign = 'left';
+    ctx.fillText('AS\u2096 (Keynesian)', l + gw * 0.44, asY - 7);
+
+    // AD: downward sloping
+    ctx.strokeStyle = '#1e40af'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i=0; i<=100; i++) {
+        const x = l + gw*0.04 + gw*0.82*(i/100);
+        const y = t + gh*0.07 + gh*0.76*(i/100);
+        i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.fillStyle = '#1e40af'; ctx.font = 'bold 11px Inter'; ctx.textAlign = 'left';
+    ctx.fillText('AD', l + gw*0.76, t + gh*0.57);
+
+    // Equilibrium: intersection of AD with asY
+    // AD: y = t+gh*0.07 + (gh*0.76/(gw*0.82)) * (x - l - gw*0.04)
+    // Solve for x where y = asY
+    const adSlope = gh*0.76 / (gw*0.82);
+    const eqX = l + gw*0.04 + (asY - t - gh*0.07) / adSlope;
+    const eqY = asY;
+
+    // Potential GDP (Yp) - vertical, to the right of equilibrium
+    const ypX = l + gw * 0.70;
+    ctx.strokeStyle = '#7c3aed'; ctx.lineWidth = 1.5; ctx.setLineDash([6,3]);
+    ctx.beginPath(); ctx.moveTo(ypX, t+5); ctx.lineTo(ypX, t+gh); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#7c3aed'; ctx.font = 'bold 10px Inter'; ctx.textAlign = 'center';
+    ctx.fillText('Yp', ypX, t+gh+14);
+
+    // Dashed projections from E
+    ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 1; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(eqX, eqY); ctx.lineTo(eqX, t+gh); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(eqX, eqY); ctx.lineTo(l, eqY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // E dot
+    ctx.beginPath(); ctx.arc(eqX, eqY, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#dc2626'; ctx.fill();
+    ctx.fillStyle = '#dc2626'; ctx.font = 'bold 12px Inter'; ctx.textAlign = 'left';
+    ctx.fillText('E', eqX+7, eqY-5);
+
+    // Axis ticks
+    ctx.fillStyle = '#64748b'; ctx.font = '10px Inter';
+    ctx.textAlign = 'center'; ctx.fillText('Y*', eqX, t+gh+13);
+    ctx.textAlign = 'right';   ctx.fillText('P*', l-5, eqY+4);
+
+    // Output gap arrow
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 1.5;
+    const arrowY = t + gh*0.75;
+    ctx.beginPath(); ctx.moveTo(eqX+4, arrowY); ctx.lineTo(ypX-4, arrowY); ctx.stroke();
+    ctx.fillStyle = '#92400e'; ctx.font = '9px Inter'; ctx.textAlign = 'center';
+    ctx.fillText('Output Gap', (eqX+ypX)/2, arrowY-5);
+}
+
+function drawNeoclassical() {
+    const { ctx, w, h } = setupCanvas('neoclassicalCanvas');
+    const pad = { l:52, r:24, t:24, b:42 };
+    pad.gw = w - pad.l - pad.r; pad.gh = h - pad.t - pad.b;
+
+    ctx.clearRect(0, 0, w, h);
+    drawAxes(ctx, w, h, pad, 'Price Level (P)', 'Real GDP (Y)');
+
+    const gw = pad.gw, gh = pad.gh, l = pad.l, t = pad.t;
+
+    // LRAS: vertical at Yp
+    const lrasX = l + gw * 0.60;
+    ctx.strokeStyle = '#7c3aed'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(lrasX, t+5); ctx.lineTo(lrasX, t+gh); ctx.stroke();
+    ctx.fillStyle = '#7c3aed'; ctx.font = 'bold 11px Inter'; ctx.textAlign = 'center';
+    ctx.fillText('LRAS', lrasX, t+18);
+
+    // AD: downward sloping
+    ctx.strokeStyle = '#1e40af'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i=0; i<=100; i++) {
+        const x = l + gw*0.04 + gw*0.86*(i/100);
+        const y = t + gh*0.06 + gh*0.82*(i/100);
+        i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.fillStyle = '#1e40af'; ctx.font = 'bold 11px Inter'; ctx.textAlign = 'left';
+    ctx.fillText('AD', l+gw*0.8, t+gh*0.64);
+
+    // SRAS: upward sloping
+    ctx.strokeStyle = '#15803d'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i=0; i<=100; i++) {
+        const x = l + gw*0.06 + gw*0.78*(i/100);
+        const y = t + gh*0.87 - gh*0.76*(i/100);
+        i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.fillStyle = '#15803d'; ctx.font = 'bold 11px Inter'; ctx.textAlign = 'left';
+    ctx.fillText('SRAS', l+gw*0.71, t+gh*0.12);
+
+    // Triple intersection at LRAS (x = lrasX)
+    // AD at lrasX:
+    const adSlope = gh*0.82 / (gw*0.86);
+    const eqX = lrasX;
+    const eqY = t + gh*0.06 + adSlope*(eqX - l - gw*0.04);
+
+    // Dashed projections
+    ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 1; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(eqX, eqY); ctx.lineTo(eqX, t+gh); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(eqX, eqY); ctx.lineTo(l, eqY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // E dot
+    ctx.beginPath(); ctx.arc(eqX, eqY, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#dc2626'; ctx.fill();
+    ctx.fillStyle = '#dc2626'; ctx.font = 'bold 12px Inter'; ctx.textAlign = 'left';
+    ctx.fillText('E', eqX+7, eqY-5);
+
+    // Axis ticks
+    ctx.fillStyle = '#64748b'; ctx.font = '10px Inter';
+    ctx.textAlign = 'center'; ctx.fillText('Yp', eqX, t+gh+13);
+    ctx.textAlign = 'right';   ctx.fillText('P*', l-5, eqY+4);
+}
+
+// ==================== INDONESIA AD-AS EPISODE CANVASES ====================
+function setupSmallCanvas(id) {
+    const canvas = document.getElementById(id);
+    if (!canvas) return null;
+    const dpr = window.devicePixelRatio || 1;
+    const w = (canvas.style.width ? parseInt(canvas.style.width) : null) || canvas.offsetWidth || 300;
+    const h = (canvas.style.height ? parseInt(canvas.style.height) : null) || 200;
+    canvas.width  = w * dpr;
+    canvas.height = h * dpr;
+    canvas.style.height = h + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    return { ctx, w, h };
+}
+
+function drawSmallAxes(ctx, pad) {
+    const { l, t, gw, gh } = pad;
+    ctx.strokeStyle = '#475569'; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(l, t); ctx.lineTo(l, t+gh); ctx.lineTo(l+gw, t+gh);
+    ctx.stroke();
+    ctx.fillStyle = '#64748b'; ctx.font = '9px Inter'; ctx.textAlign = 'center';
+    ctx.fillText('Y (Output)', l+gw/2, t+gh+26);
+    ctx.save(); ctx.translate(10, t+gh/2); ctx.rotate(-Math.PI/2);
+    ctx.fillText('P (Price)', 0, 0); ctx.restore();
+}
+
+function drawAdasEpisode(canvasId, scenario) {
+    const res = setupSmallCanvas(canvasId);
+    if (!res) return;
+    const { ctx, w, h } = res;
+    // Increase bottom padding to prevent x-axis label overlap
+    const pad = { l:38, r:14, t:18, b:42 };
+    pad.gw = w-pad.l-pad.r; pad.gh = h-pad.t-pad.b;
+    ctx.clearRect(0,0,w,h);
+    drawSmallAxes(ctx, pad);
+    const { l, t, gw, gh } = pad;
+
+    // ── Consistent color palette ──
+    // AD original  : #1e40af (blue, solid)
+    // AD shifted   : #dc2626 (red, dashed) — shift that CAUSED the problem
+    // AS/SRAS orig : #15803d (green, solid)
+    // AS/SRAS shift: #16a34a (green-lighter, dashed)
+    // LRAS         : #7c3aed (purple, dashed)
+    // E original   : #1e40af blue dot
+    // E' new equil : #dc2626 red dot
+
+    // Helper: straight-line curve (AD slopes down, SRAS slopes up)
+    function line(color, dash, x0f, y0f, x1f, y1f, label, lxf, lyf, align='left') {
+        ctx.strokeStyle = color; ctx.lineWidth = 2;
+        ctx.setLineDash(dash || []);
+        ctx.beginPath();
+        ctx.moveTo(l+gw*x0f, t+gh*y0f);
+        ctx.lineTo(l+gw*x1f, t+gh*y1f);
+        ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = color; ctx.font = 'bold 9px Inter';
+        ctx.textAlign = align;
+        ctx.fillText(label, l+gw*lxf, t+gh*lyf);
+    }
+
+    // Vertical LRAS
+    function lras(xf) {
+        ctx.strokeStyle='#7c3aed'; ctx.lineWidth=1.8; ctx.setLineDash([5,3]);
+        ctx.beginPath(); ctx.moveTo(l+gw*xf, t+4); ctx.lineTo(l+gw*xf, t+gh); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle='#7c3aed'; ctx.font='bold 9px Inter'; ctx.textAlign='center';
+        ctx.fillText('LRAS', l+gw*xf, t+12);
+    }
+
+    // Equilibrium dot + label
+    function dot(xf, yf, color, label) {
+        ctx.beginPath(); ctx.arc(l+gw*xf, t+gh*yf, 4, 0, Math.PI*2);
+        ctx.fillStyle = color; ctx.fill();
+        ctx.fillStyle = color; ctx.font = 'bold 9px Inter';
+        ctx.textAlign = 'right';
+        ctx.fillText(label, l+gw*xf - 6, t+gh*yf - 5);
+    }
+
+    // Projection dashes (vertical down to x-axis, horizontal to y-axis)
+    function project(xf, yf) {
+        ctx.strokeStyle='#94a3b8'; ctx.lineWidth=0.8; ctx.setLineDash([3,3]);
+        ctx.beginPath(); ctx.moveTo(l+gw*xf, t+gh*yf); ctx.lineTo(l+gw*xf, t+gh); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(l+gw*xf, t+gh*yf); ctx.lineTo(l, t+gh*yf); ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    // Axis tick labels — stagger y-labels vertically to avoid overlap
+    const yLabels = []; // collect {yf, text} then draw with min-gap enforcement
+    function queueYLabel(yf, text) { yLabels.push({yf, text}); }
+    const xLabels = []; // collect {xf, text}
+    function queueXLabel(xf, text) { xLabels.push({xf, text}); }
+
+    function flushLabels() {
+        // Sort y-labels top→bottom
+        yLabels.sort((a,b)=>a.yf-b.yf);
+        const minGapY = 11; // px
+        let lastPx = -999;
+        yLabels.forEach(({yf,text}) => {
+            let py = t+gh*yf+3;
+            if (py - lastPx < minGapY) py = lastPx + minGapY;
+            lastPx = py;
+            ctx.fillStyle='#64748b'; ctx.font='8px Inter'; ctx.textAlign='right';
+            ctx.fillText(text, l-3, py);
+        });
+        // Sort x-labels left→right
+        xLabels.sort((a,b)=>a.xf-b.xf);
+        const minGapX = 20;
+        let lastPxx = -999;
+        xLabels.forEach(({xf,text}) => {
+            let px = l+gw*xf;
+            if (px - lastPxx < minGapX) px = lastPxx + minGapX;
+            lastPxx = px;
+            ctx.fillStyle='#64748b'; ctx.font='8px Inter'; ctx.textAlign='center';
+            ctx.fillText(text, px, t+gh+16);
+        });
+    }
+
+    // ── EPISODE 1: Supply Shock (2005–2006) ──
+    // Keynesian model: AS horizontal; AS shifts UP-LEFT (cost push)
+    // AD slopes down; equilibrium moves from E → E' (higher P, lower Y)
+    if (scenario === 'supply_shock') {
+        const adSlope = (0.82-0.12)/(0.82-0.05); // Δy/Δx
+        // AD: from (0.05,0.12) to (0.85,0.82)
+        line('#1e40af', [], 0.05,0.12, 0.85,0.82, 'AD', 0.74, 0.76);
+        // AS original: horizontal at P* (yf=0.55)
+        line('#15803d', [], 0.05,0.55, 0.80,0.55, 'AS', 0.68, 0.50);
+        // AS' shifted up (higher P, cost push): horizontal at yf=0.32
+        line('#dc2626', [5,3], 0.05,0.32, 0.60,0.32, "AS'", 0.48, 0.27);
+        // E: AD ∩ AS at yf=0.55 → xf = 0.05 + (0.55-0.12)/adSlope = 0.05+0.43/0.875≈0.54
+        const eX=0.05+(0.55-0.12)/adSlope, eY=0.55;
+        project(eX, eY);
+        dot(eX, eY, '#1e40af', 'E');
+        queueYLabel(eY, 'P*');
+        queueXLabel(eX, 'Y*');
+        // E': AD ∩ AS' at yf=0.32 → xf = 0.05+(0.32-0.12)/adSlope ≈ 0.28
+        const ePX=0.05+(0.32-0.12)/adSlope, ePY=0.32;
+        project(ePX, ePY);
+        dot(ePX, ePY, '#dc2626', "E'");
+        queueYLabel(ePY, "P*'");
+        queueXLabel(ePX, "Y'");
+
+    // ── EPISODE 2: Demand Shock (2020 COVID) ──
+    // AD shifts LEFT; SRAS upward-sloping; LRAS vertical at Yp
+    } else if (scenario === 'demand_shock') {
+        const lrasX = 0.62;
+        lras(lrasX);
+        // SRAS: upward sloping from (0.05,0.88) to (0.85,0.12)
+        line('#15803d', [], 0.05,0.88, 0.85,0.12, 'SRAS', 0.73, 0.09);
+        // SRAS slope: Δy/Δx = (0.12-0.88)/(0.85-0.05) = -0.95
+        const srasSlope = (0.12-0.88)/(0.85-0.05);
+        const srasY = (xf) => 0.88 + srasSlope*(xf-0.05);
+        // AD original: from (0.08,0.12) to (0.88,0.86)
+        line('#1e40af', [], 0.08,0.12, 0.88,0.86, 'AD', 0.77, 0.80);
+        const adSlope2 = (0.86-0.12)/(0.88-0.08);
+        const adY2 = (xf) => 0.12 + adSlope2*(xf-0.08);
+        // AD' shifted left: from (0.03,0.12) to (0.68,0.86)
+        line('#dc2626', [5,3], 0.03,0.12, 0.68,0.86, "AD'", 0.55, 0.80);
+        const adPSlope = (0.86-0.12)/(0.68-0.03);
+        const adPY = (xf) => 0.12 + adPSlope*(xf-0.03);
+        // E: SRAS ∩ LRAS → x=lrasX, y=srasY(lrasX)
+        const eX2=lrasX, eY2=srasY(lrasX);
+        project(eX2, eY2);
+        dot(eX2, eY2, '#1e40af', 'E');
+        queueYLabel(eY2, 'P*');
+        queueXLabel(eX2, 'Yp');
+        // E': SRAS ∩ AD' — solve srasY(x)=adPY(x)
+        // 0.88+srasSlope*(x-0.05) = 0.12+adPSlope*(x-0.03)
+        // srasSlope*x - adPSlope*x = 0.12-0.88 + adPSlope*0.03 - srasSlope*0.05 + srasSlope*0.05... easier:
+        const ePX2 = (0.12-0.88 - adPSlope*(-0.03) + srasSlope*0.05) / (srasSlope - adPSlope);
+        // simplify: 0.12-0.88+adPSlope*0.03-srasSlope*0.05 = (srasSlope-adPSlope)*x
+        const numEP = 0.12-0.88+adPSlope*0.03-srasSlope*0.05;
+        const epx2 = numEP/(srasSlope-adPSlope);
+        const epy2 = srasY(epx2);
+        project(epx2, epy2);
+        dot(epx2, epy2, '#dc2626', "E'");
+        queueYLabel(epy2, "P*'");
+        queueXLabel(epx2, "Y'");
+
+    // ── EPISODE 3: Recovery (2021–2024) ──
+    // AD' (depressed) shifts RIGHT to AD''; SRAS also shifts right; moves back toward LRAS
+    } else if (scenario === 'recovery') {
+        const lrasX = 0.65;
+        lras(lrasX);
+        // SRAS (still depressed from COVID, upward sloping): solid green
+        line('#15803d', [], 0.05,0.88, 0.82,0.14, 'SRAS', 0.70, 0.10);
+        const srasSlope3 = (0.14-0.88)/(0.82-0.05);
+        const srasY3 = (xf) => 0.88 + srasSlope3*(xf-0.05);
+        // AD' (COVID-depressed, leftward): red dashed — same style as "shifted" in ep1/ep2
+        line('#dc2626', [5,3], 0.03,0.12, 0.68,0.86, "AD'", 0.54, 0.82);
+        const adPSlope3 = (0.86-0.12)/(0.68-0.03);
+        const adPY3 = (xf) => 0.12 + adPSlope3*(xf-0.03);
+        // AD'' (recovered, rightward shift): blue solid — same as "original" AD
+        line('#1e40af', [], 0.16,0.12, 0.90,0.84, "AD''", 0.78, 0.79);
+        const adPPSlope3 = (0.84-0.12)/(0.90-0.16);
+        const adPPY3 = (xf) => 0.12 + adPPSlope3*(xf-0.16);
+        // E': SRAS ∩ AD' (low COVID equilibrium)
+        const numEP3 = 0.12-0.88+adPSlope3*0.03-srasSlope3*0.05;
+        const epx3 = numEP3/(srasSlope3-adPSlope3);
+        const epy3 = srasY3(epx3);
+        project(epx3, epy3);
+        dot(epx3, epy3, '#dc2626', "E'");
+        queueYLabel(epy3, "P*'");
+        queueXLabel(epx3, "Y'");
+        // E'': SRAS ∩ AD'' (recovery equilibrium near LRAS)
+        const numEPP3 = 0.12-0.88+adPPSlope3*0.16-srasSlope3*0.05;
+        const eppx3 = numEPP3/(srasSlope3-adPPSlope3);
+        const eppy3 = srasY3(eppx3);
+        project(eppx3, eppy3);
+        dot(eppx3, eppy3, '#1e40af', "E''");
+        queueYLabel(eppy3, "P**");
+        queueXLabel(Math.min(eppx3, lrasX+0.01), 'Yp');
+    }
+
+    flushLabels();
+}
+
+function drawAllEpisodes() {
+    drawAdasEpisode('adasCase1','supply_shock');
+    drawAdasEpisode('adasCase2','demand_shock');
+    drawAdasEpisode('adasCase3','recovery');
+}
+
+
+window.addEventListener('load', () => {
+    setTimeout(() => { drawDiagrams(); drawAllEpisodes(); }, 200);
+});
+window.addEventListener('resize', () => { drawDiagrams(); drawAllEpisodes(); });
+</script>
+</body>
+</html>
