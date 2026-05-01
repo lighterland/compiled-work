@@ -368,9 +368,9 @@
                         </tr>
                     </thead>
                     <tbody class="text-slate-600 divide-y divide-slate-100">
-                        <tr><td class="px-2 py-2 text-left font-medium"><span class="lang-ru">ВВП</span><span class="lang-en hidden">GDP</span></td><td class="px-2 py-2 bg-slate-50 font-bold">1</td><td class="px-2 py-2">0.23</td><td class="px-2 py-2">0.04</td></tr>
-                        <tr><td class="px-2 py-2 text-left font-medium"><span class="lang-ru">Инфляция</span><span class="lang-en hidden">Inflation</span></td><td class="px-2 py-2">0.23</td><td class="px-2 py-2 bg-slate-50 font-bold">1</td><td class="px-2 py-2 font-bold text-red-700">0.76</td></tr>
-                        <tr><td class="px-2 py-2 text-left font-medium"><span class="lang-ru">Безработица</span><span class="lang-en hidden">Unemployment</span></td><td class="px-2 py-2">0.04</td><td class="px-2 py-2 font-bold text-red-700">0.76</td><td class="px-2 py-2 bg-slate-50 font-bold">1</td></tr>
+                        <tr><td class="px-2 py-2 text-left font-medium"><span class="lang-ru">ВВП</span><span class="lang-en hidden">GDP</span></td><td class="px-2 py-2 bg-slate-50 font-bold">1</td><td class="px-2 py-2">0.22</td><td class="px-2 py-2">0.04</td></tr>
+                        <tr><td class="px-2 py-2 text-left font-medium"><span class="lang-ru">Инфляция</span><span class="lang-en hidden">Inflation</span></td><td class="px-2 py-2">0.22</td><td class="px-2 py-2 bg-slate-50 font-bold">1</td><td class="px-2 py-2 font-bold text-red-700">0.73</td></tr>
+                        <tr><td class="px-2 py-2 text-left font-medium"><span class="lang-ru">Безработица</span><span class="lang-en hidden">Unemployment</span></td><td class="px-2 py-2">0.04</td><td class="px-2 py-2 font-bold text-red-700">0.73</td><td class="px-2 py-2 bg-slate-50 font-bold">1</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -426,11 +426,11 @@
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
             <div class="bg-slate-50 border border-slate-200 p-4">
-                <div class="text-xl font-bold text-blue-900 mb-1">−0.41</div>
+                <div class="text-xl font-bold text-blue-900 mb-1">+0.10</div>
                 <div class="text-xs font-semibold text-slate-700 lang-ru">Коэффициент корреляции: Ставка ЦБ — Рост ВВП</div>
                 <div class="text-xs font-semibold text-slate-700 lang-en hidden">Correlation coefficient: Policy Rate — GDP Growth</div>
-                <div class="text-xs text-slate-500 mt-1 lang-ru">Умеренная отрицательная связь</div>
-                <div class="text-xs text-slate-500 mt-1 lang-en hidden">Moderate negative relationship</div>
+                <div class="text-xs text-slate-500 mt-1 lang-ru">Слабая положительная связь (без лага)</div>
+                <div class="text-xs text-slate-500 mt-1 lang-en hidden">Weak positive relationship (no lag)</div>
             </div>
             <div class="bg-slate-50 border border-slate-200 p-4">
                 <div class="text-xl font-bold text-amber-700 mb-1">12.75%</div>
@@ -452,8 +452,8 @@
             <div class="border-l-4 border-blue-700 pl-3 lang-en hidden"><strong>Observation 1:</strong> In 2005–2006, Bank Indonesia raised its rate from 8.5% to 12.75% to contain inflation. GDP remained resilient (5–6%), showing that domestic demand buffers monetary tightening.</div>
             <div class="border-l-4 border-amber-600 pl-3 lang-ru"><strong>Наблюдение 2:</strong> Снижение ставки в 2020–2021 гг. не предотвратило рецессии немедленно (ВВП −2,1% в 2020 г.), что говорит о доминировании внешних шоков над денежно-кредитными инструментами.</div>
             <div class="border-l-4 border-amber-600 pl-3 lang-en hidden"><strong>Observation 2:</strong> The 2020–2021 rate cuts did not immediately prevent recession (GDP −2.1% in 2020), indicating external shocks dominated over monetary tools.</div>
-            <div class="border-l-4 border-green-700 pl-3 lang-ru"><strong>Вывод:</strong> Данные подтверждают умеренную отрицательную корреляцию (−0,41): повышение ставки ЦБ, как правило, замедляет рост ВВП с временным лагом 1–2 года.</div>
-            <div class="border-l-4 border-green-700 pl-3 lang-en hidden"><strong>Conclusion:</strong> Data confirms moderate negative correlation (−0.41): policy rate hikes tend to slow GDP growth with a 1–2 year transmission lag.</div>
+            <div class="border-l-4 border-green-700 pl-3 lang-ru"><strong>Вывод:</strong> Корреляция без лага слабая и положительная (+0,10), что объясняется эндогенностью: ЦБ повышает ставку именно в периоды высокого роста (инфляционное давление). Причинно-следственная связь «высокая ставка → замедление ВВП» проявляется с лагом 1–2 года и не улавливается простой корреляцией.</div>
+            <div class="border-l-4 border-green-700 pl-3 lang-en hidden"><strong>Conclusion:</strong> The contemporaneous correlation is weak and positive (+0.10), explained by endogeneity: the central bank raises rates precisely during high-growth periods (inflationary pressure). The causal effect of rate hikes on GDP slowdown materializes with a 1–2 year lag and is not captured by simple correlation.</div>
         </div>
     </section>
 
@@ -465,11 +465,11 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 border-b border-slate-200 pb-4">
             <div>
                 <h2 class="text-xl font-bold text-slate-800">
-                    <span class="lang-ru">IIb. Денежная масса M2 и Инфляция (2000–2024)</span>
-                    <span class="lang-en hidden">IIb. Money Supply M2 Growth & Inflation (2000–2024)</span>
+                    <span class="lang-ru">IIb. Денежная масса M2 и Инфляция (2000–2025)</span>
+                    <span class="lang-en hidden">IIb. Money Supply M2 Growth & Inflation (2000–2025)</span>
                 </h2>
-                <p class="text-xs text-slate-500 mt-1 lang-ru">Рост денежной массы (г/г, %) и индекс потребительских цен — количественная теория денег</p>
-                <p class="text-xs text-slate-500 mt-1 lang-en hidden">Year-on-year M2 growth (%) vs. CPI inflation — Quantity Theory of Money</p>
+                <p class="text-xs text-slate-500 mt-1 lang-ru">Рост денежной массы (г/г, %) и индекс потребительских цен — количественная теория денег. Источник: Bank Indonesia (2000–2025)</p>
+                <p class="text-xs text-slate-500 mt-1 lang-en hidden">Year-on-year M2 growth (%) vs. CPI inflation — Quantity Theory of Money. Source: Bank Indonesia (2000–2025)</p>
             </div>
             <div class="flex flex-wrap gap-2 no-print">
                 <button class="toggle-btn on" id="btn-m2g" onclick="toggleDS('m2inf',0,this)">M2 Growth %</button>
@@ -496,11 +496,11 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 border-b border-slate-200 pb-4">
             <div>
                 <h2 class="text-xl font-bold text-slate-800">
-                    <span class="lang-ru">IIc. ВВП и Коэффициент монетизации экономики M2/ВВП (2000–2024)</span>
-                    <span class="lang-en hidden">IIc. GDP Growth & Monetization Ratio M2/GDP (2000–2024)</span>
+                    <span class="lang-ru">IIc. ВВП и Коэффициент монетизации экономики M2/ВВП (2000–2025)</span>
+                    <span class="lang-en hidden">IIc. GDP Growth & Monetization Ratio M2/GDP (2000–2025)</span>
                 </h2>
-                <p class="text-xs text-slate-500 mt-1 lang-ru">Коэффициент монетизации = M2 / ВВП × 100%. Показывает глубину финансовой системы. Источник: World Bank (FM.LBL.BMNY.GD.ZS)</p>
-                <p class="text-xs text-slate-500 mt-1 lang-en hidden">Monetization ratio = M2 / GDP × 100%. Measures financial system depth. Source: World Bank (FM.LBL.BMNY.GD.ZS)</p>
+                <p class="text-xs text-slate-500 mt-1 lang-ru">Коэффициент монетизации = M2 / ВВП × 100%. Показывает глубину финансовой системы. Источник: World Bank (FM.LBL.BMNY.GD.ZS), 2000–2025</p>
+                <p class="text-xs text-slate-500 mt-1 lang-en hidden">Monetization ratio = M2 / GDP × 100%. Measures financial system depth. Source: World Bank (FM.LBL.BMNY.GD.ZS), 2000–2025</p>
             </div>
             <div class="flex flex-wrap gap-2 no-print">
                 <button class="toggle-btn on" id="btn-gdp3" onclick="toggleDS('monet',0,this)">
@@ -527,16 +527,16 @@
                 <div class="text-xs font-semibold text-slate-700 lang-en hidden">M2/GDP since 2020 — growing financial inclusion</div>
             </div>
             <div class="bg-slate-50 border border-slate-200 p-3">
-                <div class="text-lg font-bold text-amber-700">+0.52</div>
-                <div class="text-xs font-semibold text-slate-700 lang-ru">Корреляция M2/ВВП и роста ВВП — умеренно положительная</div>
-                <div class="text-xs font-semibold text-slate-700 lang-en hidden">Correlation M2/GDP — GDP Growth: moderately positive</div>
+                <div class="text-lg font-bold text-red-700">−0.71</div>
+                <div class="text-xs font-semibold text-slate-700 lang-ru">Корреляция M2/ВВП и роста ВВП — умеренно отрицательная</div>
+                <div class="text-xs font-semibold text-slate-700 lang-en hidden">Correlation M2/GDP — GDP Growth: moderately negative</div>
             </div>
         </div>
         <div class="mt-3 p-3 bg-slate-50 border border-slate-200 text-xs text-slate-700">
             <strong class="lang-ru">Интерпретация:</strong>
             <strong class="lang-en hidden">Interpretation:</strong>
-            <span class="lang-ru"> Рост коэффициента монетизации с ~38% (2000) до ~43% (2024) свидетельствует об углублении финансовой системы Индонезии. Это положительно коррелирует с ростом ВВП: более развитая финансовая система обеспечивает лучшее распределение капитала, кредитования и инвестиций. Индонезия остаётся ниже среднего уровня АСЕАН (~90–100%), что указывает на потенциал дальнейшего развития.</span>
-            <span class="lang-en hidden"> The rise in monetization ratio from ~38% (2000) to ~43% (2024) indicates deepening of Indonesia's financial system. This positively correlates with GDP growth: a more developed financial system enables better capital allocation, credit access, and investment. Indonesia remains below the ASEAN average (~90–100%), indicating further development potential.</span>
+            <span class="lang-ru"> Коэффициент монетизации вырос с ~38% (2000) до ~43% (2025), однако его корреляция с ростом ВВП отрицательная (−0,71). Это объясняется статистическим эффектом знаменателя: в кризисные годы ВВП падает, а M2 в номинале остаётся высоким — отношение M2/ВВП резко растёт (пик 47,7% в 2020 г.). Таким образом, высокий коэффициент монетизации сам по себе не гарантирует роста — он отражает степень финансовой глубины, но подвержен искажениям в периоды спада.</span>
+            <span class="lang-en hidden"> The monetization ratio grew from ~38% (2000) to ~43% (2025), yet its correlation with GDP growth is negative (−0.71). This is explained by the denominator effect: in crisis years GDP falls while nominal M2 remains high, causing M2/GDP to spike sharply (peak 47.7% in 2020). A high monetization ratio therefore does not guarantee growth — it measures financial depth but is distorted during recessions.</span>
         </div>
     </section>
 
@@ -713,8 +713,8 @@
             <!-- Episode 3 -->
             <div class="border border-slate-200 p-4">
                 <div class="text-xs font-bold text-white bg-blue-800 px-2 py-1 mb-3 inline-block">
-                    <span class="lang-ru">Эпизод 3: 2021–2024 — Восстановление</span>
-                    <span class="lang-en hidden">Episode 3: 2021–2024 — Recovery</span>
+                    <span class="lang-ru">Эпизод 3: 2021–2025 — Восстановление</span>
+                    <span class="lang-en hidden">Episode 3: 2021–2025 — Recovery</span>
                 </div>
                 <canvas id="adasCase3" class="adas-canvas w-full" style="height:200px;"></canvas>
                 <div class="mt-3 space-y-1.5 text-xs text-slate-600">
@@ -752,8 +752,8 @@
             <div>
                 <h4 class="text-sm font-bold text-slate-800 mb-3 lang-ru">1. Статистика и матрица корреляций</h4>
                 <h4 class="text-sm font-bold text-slate-800 mb-3 lang-en hidden">1. Statistics and Correlation Matrix</h4>
-                <p class="text-xs text-slate-700 mb-3 lang-ru">Средний рост ВВП составил 4,88% (умеренная волатильность, σ = 1,57). Средняя инфляция — 5,66% (высокая волатильность, σ = 3,25 вследствие внешних шоков). Средняя безработица — 7,08% (σ = 1,85, изменения связаны с кризисами). Инфляция и безработица имеют сильную положительную корреляцию (r = 0,76), тогда как рост ВВП слабо коррелирует с безработицей (r = 0,04).</p>
-                <p class="text-xs text-slate-700 mb-3 lang-en hidden">Average GDP growth was 4.88% (moderate volatility, σ = 1.57). Average inflation 5.66% (high volatility, σ = 3.25 from external shocks). Average unemployment 7.08% (σ = 1.85, crisis-driven changes). Inflation and unemployment show strong positive correlation (r = 0.76), while GDP growth has weak correlation with unemployment (r = 0.04).</p>
+                <p class="text-xs text-slate-700 mb-3 lang-ru">Средний рост ВВП составил 4,88% (умеренная волатильность, σ = 1,57). Средняя инфляция — 5,66% (высокая волатильность, σ = 3,25 вследствие внешних шоков). Средняя безработица — 7,08% (σ = 1,85, изменения связаны с кризисами). Инфляция и безработица имеют сильную положительную корреляцию (r = 0,73), тогда как рост ВВП слабо коррелирует с безработицей (r = 0,04).</p>
+                <p class="text-xs text-slate-700 mb-3 lang-en hidden">Average GDP growth was 4.88% (moderate volatility, σ = 1.57). Average inflation 5.66% (high volatility, σ = 3.25 from external shocks). Average unemployment 7.08% (σ = 1.85, crisis-driven changes). Inflation and unemployment show strong positive correlation (r = 0.73), while GDP growth has weak correlation with unemployment (r = 0.04).</p>
             </div>
 
             <div>
