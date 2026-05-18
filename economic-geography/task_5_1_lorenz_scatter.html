@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Анализ кривой Лоренца | ЦФО 2022</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Merriweather:ital,wght@0,300;0,700;1,300&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        h1, h2, h3, h4, h5, .serif-text { font-family: 'Merriweather', serif; }
+        .academic-header { background-color: #0f172a; border-bottom: 4px solid #7f1d1d; }
+
+        :root {
+            --color-background-primary: rgba(15, 23, 42, 0.92);
+            --color-border-secondary: #334155;
+            --color-text-primary: #f8fafc;
+            --color-text-secondary: #cbd5e1;
+        }
+
+        #tip2 {
+            position: absolute;
+            background: var(--color-background-primary);
+            border: 1px solid var(--color-border-secondary);
+            border-radius: 4px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: var(--color-text-primary);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.12s;
+            white-space: nowrap;
+            z-index: 10;
+            line-height: 1.6;
+        }
+
+        .chart-fixed-wrapper {
+            position: relative;
+            width: 650px;
+            height: 650px;
+            margin: 0 auto;
+        }
+
+        /* Предотвращает стандартную прокрутку страницы при попытке потянуть график */
+        canvas {
+            touch-action: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+<header class="academic-header text-white py-10 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold tracking-tight">
+                    Анализ кривой Лоренца: Центральный ФО
+                </h1>
+                <p class="mt-3 text-slate-300 text-lg font-light">
+                    Доля субъектов в ВРП федерального округа и численности населения, 2022 г.
+                </p>
+                <div class="mt-5 pt-3 border-t border-slate-700/50 inline-block">
+                    <p class="text-slate-300 text-sm">
+                        Выполнил: <span class="font-semibold text-white">Садана Эрланд</span> |
+                        <span class="font-semibold text-white">ЭЭУбд-07-25</span> | <span class="font-semibold text-white">1132255233</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <section class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+        <div class="mb-4 border-b border-slate-200 pb-4 flex justify-between items-end">
+            <h2 class="text-xl font-bold text-slate-800">
+                Субъекты Центрального федерального округа
+            </h2>
+            <button onclick="chart.resetZoom()" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 px-3 py-1.5 rounded text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                Сбросить масштаб
+            </button>
+        </div>
+        
+        <p class="text-sm text-slate-600 mb-5 italic">
+            Данный интерактивный график построен в рамках выполнения долгосрочного практического задания по дисциплине «Экономическая география».
+        </p>
+
+        <div class="flex flex-wrap gap-4 mb-5 text-xs text-slate-600">
+            <span class="flex items-center gap-1.5">
+                <span style="width: 10px; height: 10px; border-radius: 50%; background: #378ADD; border: 1.5px solid #185FA5; display:inline-block;"></span>
+                Субъект ЦФО
+            </span>
+            <span class="flex items-center gap-1.5">
+                <span style="width: 24px; height: 0; border-top: 1.5px dashed #888780; display:inline-block;"></span>
+                Линия идеального равенства (К = 1)
+            </span>
+            <span class="flex items-center gap-1.5">
+                <span style="width: 24px; height: 0; border-top: 1.5px solid rgba(24,95,165,0.35); display:inline-block;"></span>
+                Соединение точек
+            </span>
+        </div>
+
+        <div class="overflow-x-auto pb-4">
+            <div class="chart-fixed-wrapper">
+                <div id="tip2"></div>
+                <canvas id="sc2" width="650" height="650" style="cursor: grab;"></canvas>
+            </div>
+        </div>
+
+        <div class="mt-4 p-4 bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1">
+            <div><strong>* Примечание:</strong> Коэффициент преимущества К = доля в ВРП ФО / доля в населении ФО. Точки выше линии равенства (К &gt; 1) — регионы с доходом выше среднего; ниже (К &lt; 1) — ниже среднего.</div>
+            <div class="text-slate-500">💡 <strong>Управление графиком:</strong> Используйте колесико мыши для приближения. Зажмите левую кнопку мыши и тяните для перемещения по графику. Вы не можете отдалить график больше его оригинального масштаба.</div>
+        </div>
+    </section>
+
+</main>
+
+<script>
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = '#475569';
+
+const regions = [
+  { label: 'Белгородская обл.', x: 0.037, y: 0.028 },
+  { label: 'Брянская обл.', x: 0.028, y: 0.012 },
+  { label: 'Владимирская обл.', x: 0.033, y: 0.016 },
+  { label: 'Воронежская обл.', x: 0.057, y: 0.029 },
+  { label: 'Ивановская обл.', x: 0.023, y: 0.008 },
+  { label: 'Калужская обл.', x: 0.027, y: 0.015 },
+  { label: 'Костромская обл.', x: 0.014, y: 0.006 },
+  { label: 'Курская обл.', x: 0.026, y: 0.014 },
+  { label: 'Липецкая обл.', x: 0.028, y: 0.017 },
+  { label: 'Московская обл.', x: 0.215, y: 0.163 },
+  { label: 'Орловская обл.', x: 0.017, y: 0.008 },
+  { label: 'Рязанская обл.', x: 0.027, y: 0.013 },
+  { label: 'Смоленская обл.', x: 0.021, y: 0.010 },
+  { label: 'Тамбовская обл.', x: 0.024, y: 0.010 },
+  { label: 'Тверская обл.', x: 0.030, y: 0.013 },
+  { label: 'Тульская обл.', x: 0.037, y: 0.021 },
+  { label: 'Ярославская обл.', x: 0.030, y: 0.016 },
+  { label: 'г. Москва', x: 0.327, y: 0.602 },
+];
+
+const sorted = [...regions].sort((a, b) => a.x - b.x);
+
+const gridMaj = 'rgba(0,0,0,0.09)';
+const gridMin = 'rgba(0,0,0,0.04)';
+const axisCol = '#e2e8f0';
+const labelCol = '#64748b';
+const titleCol = '#1e293b';
+const tipEl = document.getElementById('tip2');
+
+const sqGrid = {
+  id: 'sqGrid',
+  beforeDraw(chart) {
+    const { ctx, chartArea: { left, top, right, bottom }, scales } = chart;
+    if (!scales.x || !scales.y) return;
+    ctx.save();
+    ctx.lineWidth = 0.5; ctx.strokeStyle = gridMin;
+    
+    for (let v = 0; v <= 0.71; v = Math.round((v + 0.025) * 1000) / 1000) {
+      const px = scales.x.getPixelForValue(v);
+      if (px >= left && px <= right) {
+        ctx.beginPath(); ctx.moveTo(px, top); ctx.lineTo(px, bottom); ctx.stroke();
+      }
+      const py = scales.y.getPixelForValue(v);
+      if (py >= top && py <= bottom) {
+        ctx.beginPath(); ctx.moveTo(left, py); ctx.lineTo(right, py); ctx.stroke();
+      }
+    }
+    
+    ctx.strokeStyle = gridMaj; ctx.lineWidth = 1;
+    [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7].forEach(v => {
+      const px = scales.x.getPixelForValue(v);
+      if (px >= left && px <= right) {
+        ctx.beginPath(); ctx.moveTo(px, top); ctx.lineTo(px, bottom); ctx.stroke();
+      }
+      const py = scales.y.getPixelForValue(v);
+      if (py >= top && py <= bottom) {
+        ctx.beginPath(); ctx.moveTo(left, py); ctx.lineTo(right, py); ctx.stroke();
+      }
+    });
+    ctx.restore();
+  }
+};
+
+const chart = new Chart(document.getElementById('sc2'), {
+  type: 'scatter',
+  data: {
+    datasets: [
+      {
+        label: 'Субъекты ЦФО',
+        data: regions.map(r => ({ x: r.x, y: r.y, label: r.label })),
+        backgroundColor: '#378ADD',
+        borderColor: '#185FA5',
+        borderWidth: 1.5,
+        pointRadius: 6,
+        pointHoverRadius: 9,
+        order: 2,
+      },
+      {
+        label: 'Соединение',
+        data: sorted.map(r => ({ x: r.x, y: r.y })),
+        type: 'line',
+        borderColor: 'rgba(24,95,165,0.35)',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: false,
+        tension: 0,
+        order: 3,
+      },
+      {
+        label: 'Равенство (К=1)',
+        data: [{ x: 0, y: 0 }, { x: 0.7, y: 0.7 }],
+        type: 'line',
+        borderColor: '#888780',
+        borderWidth: 1.5,
+        borderDash: [5, 4],
+        pointRadius: 0,
+        fill: false,
+        tension: 0,
+        order: 4,
+      }
+    ]
+  },
+  options: {
+    responsive: false,
+    maintainAspectRatio: false,
+    animation: false,
+    layout: { padding: { right: 12, top: 10 } },
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: false },
+      zoom: {
+        limits: {
+          x: { min: 'original', max: 'original' },
+          y: { min: 'original', max: 'original' }
+        },
+        pan: {
+          enabled: true,
+          mode: 'xy',
+          // Добавляем эффект изменения курсора при удержании мышки (drag)
+          onPanStart: ({chart}) => { chart.canvas.style.cursor = 'grabbing'; },
+          onPanComplete: ({chart}) => { chart.canvas.style.cursor = 'grab'; }
+        },
+        zoom: {
+          wheel: {
+            enabled: true,
+            speed: 0.05
+          },
+          pinch: {
+            enabled: true
+          },
+          mode: 'xy'
+        }
+      }
+    },
+    scales: {
+      x: {
+        type: 'linear', 
+        min: 0, 
+        max: 0.7, 
+        ticks: { stepSize: 0.1, color: labelCol, font: { size: 11 }, callback: v => (v * 100).toFixed(0) + '%' },
+        grid: { display: false },
+        border: { display: true, color: axisCol },
+        title: { display: true, text: 'Доля в численности населения ФО, %', color: titleCol, font: { size: 12, weight: '600' }, padding: { top: 8 } }
+      },
+      y: {
+        type: 'linear', 
+        min: 0, 
+        max: 0.7, 
+        ticks: { stepSize: 0.1, color: labelCol, font: { size: 11 }, callback: v => (v * 100).toFixed(0) + '%' },
+        grid: { display: false },
+        border: { display: true, color: axisCol },
+        title: { display: true, text: 'Доля в ВРП ФО, %', color: titleCol, font: { size: 12, weight: '600' }, padding: { bottom: 8 } }
+      }
+    },
+    onHover(e, elements) {
+      const canvas = chart.canvas;
+      const active = elements.filter(el => chart.data.datasets[el.datasetIndex].data[el.index]?.label);
+      if (active.length > 0) {
+        const el = active[0];
+        const pt = chart.data.datasets[el.datasetIndex].data[el.index];
+        const K = (pt.y / pt.x).toFixed(2);
+        const popPct = (pt.x * 100).toFixed(1);
+        const grpPct = (pt.y * 100).toFixed(1);
+        
+        const kColor = parseFloat(K) >= 1 ? '#fca5a5' : '#93c5fd'; 
+        
+        tipEl.innerHTML =
+          `<span style="font-weight:600;color:var(--color-text-primary)">${pt.label}</span><br>` +
+          `<span style="color:var(--color-text-secondary)">Доля в населении: <b style="color:var(--color-text-primary)">${popPct}%</b></span><br>` +
+          `<span style="color:var(--color-text-secondary)">Доля в ВРП ФО: <b style="color:var(--color-text-primary)">${grpPct}%</b></span><br>` +
+          `<span style="color:var(--color-text-secondary)">Коэф. преимущества К = <b style="color:${kColor}">${K}</b></span>`;
+          
+        const wrapRect = canvas.parentElement.getBoundingClientRect();
+        const mx = e.native.clientX - wrapRect.left;
+        const my = e.native.clientY - wrapRect.top;
+        const tw = tipEl.offsetWidth || 200;
+        const th = tipEl.offsetHeight || 80;
+        let tx = mx + 14;
+        let ty = my - th / 2;
+        if (tx + tw > wrapRect.width - 8) tx = mx - tw - 14;
+        if (ty < 0) ty = 4;
+        tipEl.style.left = tx + 'px';
+        tipEl.style.top = ty + 'px';
+        tipEl.style.opacity = 1;
+        
+        // При наведении на точку курсор становится прицелом
+        canvas.style.cursor = 'crosshair';
+      } else {
+        tipEl.style.opacity = 0;
+        
+        // Возвращаем иконку "руки", если мы просто водим по пустому графику
+        if (canvas.style.cursor !== 'grabbing') {
+            canvas.style.cursor = 'grab';
+        }
+      }
+    }
+  },
+  plugins: [sqGrid]
+});
+</script>
+
+</body>
+</html>
