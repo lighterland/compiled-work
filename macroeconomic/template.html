@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Построитель графиков — ЭЭУбд-07-25</title>
+    <meta name="description" content="Инструмент для построения интерактивных графиков по макроэкономическим данным для группы ЭЭУбд-07-25">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,700;1,300&display=swap" rel="stylesheet">
+
+    <style>
+        /* ===== BASE ===== */
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        h1, h2, h3, h4, h5, .serif-text { font-family: 'Merriweather', serif; }
+
+        /* ===== THEME VARIABLES ===== */
+        /* Applied via JS by adding class to <html> */
+
+        /* --- Theme: Academic Dark --- */
+        body.theme-dark {
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        body.theme-dark .academic-header { background: #020617; border-bottom-color: #7f1d1d; }
+        body.theme-dark .tool-card { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+        body.theme-dark .tool-card-title { color: #94a3b8; }
+        body.theme-dark .tool-card-title::after { background: #334155; }
+        body.theme-dark #dataTable th { background: #334155; }
+        body.theme-dark #dataTable th, body.theme-dark #dataTable td { border-color: #475569; }
+        body.theme-dark .col-name-input { color: #e2e8f0; }
+        body.theme-dark #dataTable td input { color: #e2e8f0; background: transparent; }
+        body.theme-dark #dataTable td input:focus { background: #1e3a5f; }
+        body.theme-dark .rte-toolbar { background: #334155; border-color: #475569; }
+        body.theme-dark .rte-btn { background: #1e293b; border-color: #475569; color: #94a3b8; }
+        body.theme-dark .rte-btn:hover { background: #1e40af; color: #fff; }
+        body.theme-dark .rte-sep { background: #475569; }
+        body.theme-dark #rteEditor { background: #1e293b; border-color: #475569; color: #e2e8f0; }
+        body.theme-dark .hint-tooltip { color: #64748b; }
+        body.theme-dark .vline-item { background: #1e293b; border-color: #334155; }
+        body.theme-dark .btn-secondary { background: #1e293b; border-color: #475569; color: #94a3b8; }
+        body.theme-dark .btn-secondary:hover { background: #334155; }
+        body.theme-dark .input-text { background: #1e293b; border-color: #475569; color: #e2e8f0; }
+        body.theme-dark .chart-wrap { background: #1e293b; }
+        body.theme-dark .toggle-btn.off { background: #1e293b; color: #94a3b8; border-color: #475569; }
+        body.theme-dark #descSection h3 { color: #e2e8f0; }
+        body.theme-dark .toolbar-bar { background: #1e293b; border-color: #334155; }
+
+        /* --- Theme: Soft Paper (warm cream) --- */
+        body.theme-paper {
+            background: #faf7f2;
+            color: #2d2417;
+        }
+        body.theme-paper .academic-header { background: #2d2417; border-bottom-color: #92400e; }
+        body.theme-paper .tool-card { background: #fffdf7; border-color: #e8dfc8; color: #2d2417; }
+        body.theme-paper .tool-card-title { color: #78614a; }
+        body.theme-paper .tool-card-title::after { background: #e8dfc8; }
+        body.theme-paper #dataTable th { background: #f5edd8; }
+        body.theme-paper #dataTable th, body.theme-paper #dataTable td { border-color: #ddd0b3; }
+        body.theme-paper .col-name-input { color: #2d2417; }
+        body.theme-paper #dataTable td input { color: #2d2417; }
+        body.theme-paper #dataTable td input:focus { background: #fff8ec; }
+        body.theme-paper .rte-toolbar { background: #f5edd8; border-color: #ddd0b3; }
+        body.theme-paper .rte-btn { background: #fffdf7; border-color: #ddd0b3; color: #78614a; }
+        body.theme-paper .rte-btn:hover { background: #92400e; color: #fff; border-color: #92400e; }
+        body.theme-paper #rteEditor { background: #fffdf7; border-color: #ddd0b3; color: #2d2417; }
+        body.theme-paper .vline-item { background: #f5edd8; border-color: #e8dfc8; }
+        body.theme-paper .btn-primary { background: #92400e; }
+        body.theme-paper .btn-primary:hover { background: #78350f; }
+        body.theme-paper .toggle-btn.on { background: #92400e; border-color: #92400e; }
+        body.theme-paper .hint-tooltip { color: #a08060; }
+        body.theme-paper .input-text { border-color: #ddd0b3; color: #2d2417; }
+        body.theme-paper .chart-wrap { background: #fffdf7; }
+        body.theme-paper .toolbar-bar { background: #fffdf7; border-color: #e8dfc8; }
+
+        /* --- Theme: Navy Slate (corporate) --- */
+        body.theme-navy {
+            background: #f0f4f8;
+            color: #1e293b;
+        }
+        body.theme-navy .academic-header { background: #0f2952; border-bottom-color: #1d4ed8; }
+        body.theme-navy .tool-card { background: #fff; border-color: #c8d8ee; color: #1e293b; }
+        body.theme-navy .tool-card-title { color: #3b5b8c; }
+        body.theme-navy .tool-card-title::after { background: #c8d8ee; }
+        body.theme-navy #dataTable th { background: #e8f0fb; }
+        body.theme-navy #dataTable th, body.theme-navy #dataTable td { border-color: #c8d8ee; }
+        body.theme-navy .col-name-input { color: #0f2952; }
+        body.theme-navy #dataTable td input { color: #1e293b; }
+        body.theme-navy #dataTable td input:focus { background: #dbeafe; }
+        body.theme-navy .rte-toolbar { background: #e8f0fb; border-color: #c8d8ee; }
+        body.theme-navy .rte-btn { background: #fff; border-color: #c8d8ee; color: #3b5b8c; }
+        body.theme-navy .rte-btn:hover { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+        body.theme-navy #rteEditor { background: #fff; border-color: #c8d8ee; color: #1e293b; }
+        body.theme-navy .vline-item { background: #e8f0fb; border-color: #c8d8ee; }
+        body.theme-navy .btn-primary { background: #1d4ed8; }
+        body.theme-navy .btn-primary:hover { background: #1e40af; }
+        body.theme-navy .toggle-btn.on { background: #1d4ed8; border-color: #1d4ed8; }
+        body.theme-navy .hint-tooltip { color: #6b8ab8; }
+        body.theme-navy .input-text { border-color: #c8d8ee; color: #1e293b; }
+        body.theme-navy .chart-wrap { background: #fff; }
+        body.theme-navy .toolbar-bar { background: #fff; border-color: #c8d8ee; }
+
+        /* --- Theme: Forest (green calm) --- */
+        body.theme-forest {
+            background: #f1f8f3;
+            color: #1a2e1e;
+        }
+        body.theme-forest .academic-header { background: #14291a; border-bottom-color: #166534; }
+        body.theme-forest .tool-card { background: #fff; border-color: #bbddc4; color: #1a2e1e; }
+        body.theme-forest .tool-card-title { color: #2d6a3c; }
+        body.theme-forest .tool-card-title::after { background: #bbddc4; }
+        body.theme-forest #dataTable th { background: #e6f4eb; }
+        body.theme-forest #dataTable th, body.theme-forest #dataTable td { border-color: #bbddc4; }
+        body.theme-forest .col-name-input { color: #14291a; }
+        body.theme-forest #dataTable td input { color: #1a2e1e; }
+        body.theme-forest #dataTable td input:focus { background: #dcfce7; }
+        body.theme-forest .rte-toolbar { background: #e6f4eb; border-color: #bbddc4; }
+        body.theme-forest .rte-btn { background: #fff; border-color: #bbddc4; color: #2d6a3c; }
+        body.theme-forest .rte-btn:hover { background: #166534; color: #fff; border-color: #166534; }
+        body.theme-forest #rteEditor { background: #fff; border-color: #bbddc4; color: #1a2e1e; }
+        body.theme-forest .vline-item { background: #e6f4eb; border-color: #bbddc4; }
+        body.theme-forest .btn-primary { background: #166534; }
+        body.theme-forest .btn-primary:hover { background: #14532d; }
+        body.theme-forest .toggle-btn.on { background: #166534; border-color: #166534; }
+        body.theme-forest .hint-tooltip { color: #5a9068; }
+        body.theme-forest .input-text { border-color: #bbddc4; color: #1a2e1e; }
+        body.theme-forest .chart-wrap { background: #fff; }
+        body.theme-forest .toolbar-bar { background: #fff; border-color: #bbddc4; }
+
+        /* Default (no theme class = light clean) */
+        body:not([class*='theme-']) .academic-header { background-color: #0f172a; border-bottom: 4px solid #7f1d1d; }
+        body.theme-default .academic-header { background-color: #0f172a; border-bottom: 4px solid #7f1d1d; }
+
+        /* ===== EDITABLE HEADER TEXT ===== */
+        [contenteditable="true"] {
+            outline: none;
+            cursor: text;
+        }
+        [contenteditable="true"]:hover {
+            background: rgba(255,255,255,0.08);
+            border-radius: 4px;
+        }
+        [contenteditable="true"]:focus {
+            background: rgba(255,255,255,0.12);
+            border-radius: 4px;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+            padding: 0 4px;
+        }
+
+        /* ===== TOGGLE BUTTONS ===== */
+        .toggle-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 14px; border-radius: 4px; font-size: 0.78rem; font-weight: 600;
+            border: 1.5px solid; cursor: pointer; transition: all 0.15s; font-family: 'Inter', sans-serif;
+        }
+        .toggle-btn.on  { background: #1e3a5f; color: #fff; border-color: #1e3a5f; }
+        .toggle-btn.off { background: #fff; color: #64748b; border-color: #cbd5e1; }
+        .toggle-btn:hover { opacity: 0.82; }
+
+        /* ===== TABLE ===== */
+        #dataTable {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 400px;
+        }
+        #dataTable th, #dataTable td {
+            border: 1px solid #cbd5e1;
+            padding: 0;
+            min-width: 90px;
+        }
+        #dataTable th {
+            background: #f1f5f9;
+            position: relative;
+        }
+        .th-inner {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 8px;
+        }
+        .col-name-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #1e293b;
+            min-width: 60px;
+            font-family: 'Inter', sans-serif;
+        }
+        .col-name-input::placeholder { color: #94a3b8; }
+        .col-color-input {
+            width: 22px; height: 22px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 1px;
+            background: none;
+        }
+        .col-remove-btn {
+            display: flex; align-items: center; justify-content: center;
+            width: 18px; height: 18px;
+            background: #fee2e2; border: 1px solid #fca5a5;
+            border-radius: 3px; cursor: pointer;
+            font-size: 11px; color: #dc2626; font-weight: 700;
+            flex-shrink: 0;
+            transition: all 0.15s;
+        }
+        .col-remove-btn:hover { background: #dc2626; color: #fff; }
+        #dataTable td input {
+            width: 100%;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 0.82rem;
+            color: #334155;
+            padding: 7px 8px;
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+        }
+        #dataTable td input:focus {
+            background: #eff6ff;
+        }
+        .row-del-btn {
+            display: flex; align-items: center; justify-content: center;
+            width: 20px; height: 20px; border-radius: 3px;
+            background: #fee2e2; border: 1px solid #fca5a5;
+            cursor: pointer; font-size: 12px; color: #dc2626;
+            transition: all 0.15s; flex-shrink: 0; margin: auto;
+        }
+        .row-del-btn:hover { background: #dc2626; color: #fff; }
+        td.row-del-cell {
+            width: 32px; min-width: 32px;
+            border-color: transparent;
+            background: transparent;
+        }
+
+        /* ===== VERTICAL LINES ===== */
+        .vline-item {
+            display: flex; align-items: center; gap: 8px;
+            background: #f8fafc; border: 1px solid #e2e8f0;
+            border-radius: 6px; padding: 8px 12px;
+        }
+
+        /* ===== RICH TEXT EDITOR ===== */
+        .rte-toolbar {
+            display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
+            padding: 8px 10px;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+        }
+        .rte-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 30px; height: 28px; border-radius: 4px;
+            border: 1px solid #cbd5e1; background: #fff;
+            cursor: pointer; font-size: 0.8rem; font-weight: 700;
+            color: #475569; transition: all 0.15s;
+        }
+        .rte-btn:hover { background: #1e3a5f; color: #fff; border-color: #1e3a5f; }
+        .rte-btn.active { background: #1e3a5f; color: #fff; border-color: #1e3a5f; }
+        .rte-sep { width: 1px; height: 24px; background: #cbd5e1; margin: 0 2px; }
+        #rteEditor {
+            min-height: 140px;
+            border: 1px solid #cbd5e1;
+            border-radius: 0 0 6px 6px;
+            padding: 14px 16px;
+            background: #fff;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: #1e293b;
+            outline: none;
+        }
+        #rteEditor:focus { border-color: #3b82f6; }
+        #rteEditor ul { list-style-type: disc; padding-left: 20px; }
+        #rteEditor ol { list-style-type: decimal; padding-left: 20px; }
+
+        /* ===== BG PALETTE ===== */
+        .bg-swatch {
+            width: 28px; height: 28px; border-radius: 50%;
+            cursor: pointer; border: 2px solid transparent;
+            transition: all 0.15s; flex-shrink: 0;
+        }
+        .bg-swatch:hover, .bg-swatch.selected { border-color: #1e3a5f; transform: scale(1.15); }
+
+        /* ===== CHART SECTION ===== */
+        .chart-wrap { position: relative; height: 400px; background: #fff; }
+
+        /* ===== SECTION CARDS ===== */
+        .tool-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            padding: 20px 24px;
+            margin-bottom: 16px;
+        }
+        .tool-card-title {
+            font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em;
+            text-transform: uppercase; color: #64748b;
+            margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+        }
+        .tool-card-title::after {
+            content: ''; flex: 1; height: 1px; background: #e2e8f0;
+        }
+
+        /* ===== ACTION BUTTONS ===== */
+        .btn-primary {
+            display: inline-flex; align-items: center; gap-8px; gap: 8px;
+            background: #1e3a5f; color: #fff;
+            border: none; border-radius: 6px;
+            padding: 10px 22px; font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; transition: all 0.18s;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-primary:hover { background: #1e40af; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(30,58,95,0.3); }
+        .btn-secondary {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #fff; color: #475569;
+            border: 1.5px solid #cbd5e1; border-radius: 6px;
+            padding: 8px 16px; font-size: 0.82rem; font-weight: 600;
+            cursor: pointer; transition: all 0.15s;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-secondary:hover { background: #f8fafc; border-color: #94a3b8; }
+        .btn-danger {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #fee2e2; color: #dc2626;
+            border: 1.5px solid #fca5a5; border-radius: 6px;
+            padding: 6px 12px; font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; transition: all 0.15s;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-danger:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: #0f172a; color: #94a3b8;
+            text-align: center; padding: 28px 20px 24px;
+            margin-top: 40px; font-size: 0.85rem;
+        }
+        footer .heart { color: #f43f5e; font-size: 1.1rem; }
+        footer .hint {
+            margin-top: 8px; font-size: 0.75rem; color: #64748b;
+        }
+
+        /* ===== PRINT ===== */
+        @media print {
+            .no-print { display: none !important; }
+            /* HEADER is hidden on print — only chart + description + footer appear */
+            header.academic-header { display: none !important; }
+            body { background: #fff !important; font-size: 10pt; margin: 0; padding: 0; color: #1e293b !important; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            main { padding: 0 8mm !important; }
+            .max-w-5xl { max-width: 100% !important; padding: 0 !important; }
+            .tool-card { background: #fff !important; color: #1e293b !important; box-shadow: none !important; border: 1px solid #e2e8f0 !important; margin-bottom: 6mm; }
+            .chart-wrap { height: auto !important; min-height: 260px !important; background: #fff !important; }
+            .chart-wrap canvas { max-width: 100% !important; height: auto !important; display: block !important; }
+            footer { background: #0f172a !important; color: #94a3b8 !important; page-break-inside: avoid; }
+            #rteEditor { border: none !important; min-height: unset; background: #fff !important; color: #1e293b !important; }
+            .rte-toolbar { display: none !important; }
+            #chartResultSection { display: block !important; }
+            #descSection { display: block !important; }
+            #descSection h3 { color: #1e293b !important; }
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.3s ease forwards; }
+
+        /* ===== TOOLTIP ===== */
+        .hint-tooltip {
+            font-size: 0.7rem; color: #94a3b8;
+            font-style: italic; margin-top: 4px;
+        }
+
+        /* ===== SELECT STYLE ===== */
+        select.input-select {
+            border: 1px solid #cbd5e1; border-radius: 5px;
+            padding: 6px 10px; font-size: 0.82rem;
+            color: #334155; background: #fff;
+            font-family: 'Inter', sans-serif;
+            outline: none; cursor: pointer;
+        }
+        select.input-select:focus { border-color: #3b82f6; }
+        input.input-text {
+            border: 1px solid #cbd5e1; border-radius: 5px;
+            padding: 6px 10px; font-size: 0.82rem;
+            color: #334155; background: #fff;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+        }
+        input.input-text:focus { border-color: #3b82f6; }
+    </style>
+</head>
+<body id="pageBody" style="background-color: #f8fafc;">
+
+<!-- ===== HEADER (no-print — скрыт при печати) ===== -->
+<header class="academic-header text-white no-print" style="padding: 28px 0 24px;">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Строим графики, сдаём макру</h1>
+                <p class="text-slate-400 text-sm font-light mt-1">Инструмент группы ЭЭУбд-07-25 — чтобы наконец-то разобраться в макроэкономике</p>
+                <div class="mt-3 flex items-center gap-2 text-xs">
+                    <span class="text-slate-300">Выполнил: Ваше Имя</span>
+                    <span class="text-slate-600">·</span>
+                    <span class="font-semibold text-white">ЭЭУбд-07-25</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="printReport()" class="bg-white/10 hover:bg-white/20 border border-white/30 text-white rounded-lg px-4 py-2 text-sm font-semibold transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2m-6 0v4m-3-4h6"/></svg>
+                    Печать / PDF
+                </button>
+            </div>
+        </div>
+
+    </div>
+</header>
+
+<main class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+
+    <!-- ===== TOOLBAR ROW ===== -->
+    <div class="no-print toolbar-bar flex flex-wrap items-center gap-3 mb-6 p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
+        <button onclick="buildChart()" class="btn-primary" id="buildBtn">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            Построить график
+        </button>
+        <button onclick="printReport()" class="btn-secondary">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2m-6 0v4m-3-4h6"/></svg>
+            Печать
+        </button>
+    </div>
+
+    <!-- ===== DATA TABLE SECTION ===== -->
+    <div class="tool-card no-print">
+        <div class="tool-card-title">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6h18M3 14h18M3 18h18"/></svg>
+            Таблица данных
+        </div>
+
+        <div class="overflow-x-auto rounded-lg border border-slate-200">
+            <table id="dataTable">
+                <thead>
+                    <tr id="tableHeaderRow">
+                        <!-- delete col -->
+                        <th style="width:32px; border-color:transparent; background:transparent;"></th>
+                        <!-- year col -->
+                        <th>
+                            <div class="th-inner">
+                                <span class="col-name-input font-semibold text-slate-700" style="cursor:default;">Год</span>
+                            </div>
+                        </th>
+                        <!-- dynamic cols added by JS -->
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- rows added by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mt-3">
+            <button onclick="addRow()" class="btn-secondary text-xs">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Добавить строку
+            </button>
+            <button onclick="addColumn()" class="btn-secondary text-xs">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Добавить столбец
+            </button>
+        </div>
+        <p class="hint-tooltip mt-2">Первый столбец — год. Остальные — ваши переменные. Нажмите на заголовок столбца для редактирования названия. Цвет рядом с названием — цвет линии на графике.</p>
+    </div>
+
+    <!-- ===== VERTICAL LINES SECTION ===== -->
+    <div class="tool-card no-print">
+        <div class="tool-card-title">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16"/></svg>
+            Вертикальные линии (события / маркеры)
+        </div>
+        <div id="vlinesList" class="space-y-2 mb-3"></div>
+        <div class="flex flex-wrap items-end gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Год</label>
+                <input type="number" id="vlineYear" placeholder="напр. 2020" class="input-text w-28">
+            </div>
+            <div class="flex-1 min-w-40">
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Подпись (необязательно)</label>
+                <input type="text" id="vlineLabel" placeholder="напр. Начало кризиса" class="input-text w-full">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Цвет</label>
+                <input type="color" id="vlineColor" value="#dc2626" class="col-color-input w-9 h-9">
+            </div>
+            <button onclick="addVLine()" class="btn-secondary">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Добавить
+            </button>
+        </div>
+        <p class="hint-tooltip mt-2">Вертикальные линии отображаются на графике как пунктирные маркеры с подписью.</p>
+    </div>
+
+    <!-- ===== BUILD BUTTON (center) ===== -->
+    <div class="flex justify-center my-4 no-print">
+        <button onclick="buildChart()" class="btn-primary text-base px-10 py-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            Построить / Обновить график
+        </button>
+    </div>
+
+    <!-- ===== CHART RESULT SECTION ===== -->
+    <div id="chartResultSection" class="tool-card" style="display:none;">
+        <!-- Toggle buttons -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 border-b border-slate-200 pb-4">
+            <h2 id="chartTitle" class="text-lg font-bold text-slate-800">График</h2>
+            <div id="toggleButtonsRow" class="flex flex-wrap gap-2 no-print"></div>
+        </div>
+
+        <!-- Chart canvas -->
+        <div class="chart-wrap">
+            <canvas id="mainChart"></canvas>
+        </div>
+
+        <!-- Legend hint -->
+        <div class="mt-3 flex flex-wrap gap-4 text-xs text-slate-500 no-print" id="legendHint">
+            <span class="flex items-center gap-1.5">
+                <span style="display:inline-block;width:24px;height:2px;border-top:2px dashed #7c3aed;"></span>
+                Линия тренда (линейная регрессия)
+            </span>
+        </div>
+
+        <!-- Print hint -->
+        <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg no-print">
+            <p class="text-xs text-amber-800 font-semibold">📋 Для сдачи работы:</p>
+            <p class="text-xs text-amber-700 mt-1">Нажмите кнопку <strong>«Печать / PDF»</strong> для формирования отчёта для Николая Николаевича. Панель инструментов при печати скрывается — виден только график и интерпретация.</p>
+        </div>
+    </div>
+
+    <!-- ===== DESCRIPTION / INTERPRETATION SECTION ===== -->
+    <div id="descSection" class="tool-card">
+        <div class="tool-card-title no-print">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            Описание и интерпретация
+        </div>
+        <h3 class="text-base font-bold text-slate-700 mb-3" id="descHeading" contenteditable="true" style="outline:none; cursor:text;" title="Нажмите для редактирования">Интерпретация результатов</h3>
+
+        <!-- RTE Toolbar -->
+        <div class="rte-toolbar no-print">
+            <button class="rte-btn" onclick="rte('bold')" title="Жирный (Ctrl+B)"><b>Ж</b></button>
+            <button class="rte-btn" onclick="rte('italic')" title="Курсив (Ctrl+I)"><i>К</i></button>
+            <button class="rte-btn" onclick="rte('underline')" title="Подчёркнутый (Ctrl+U)"><u>П</u></button>
+            <div class="rte-sep"></div>
+            <button class="rte-btn" onclick="rteFontSize('small')" title="Мелкий шрифт" style="font-size:0.65rem;">A</button>
+            <button class="rte-btn" onclick="rteFontSize('medium')" title="Средний шрифт" style="font-size:0.85rem;">A</button>
+            <button class="rte-btn" onclick="rteFontSize('large')" title="Крупный шрифт" style="font-size:1rem;">A</button>
+            <div class="rte-sep"></div>
+            <button class="rte-btn" onclick="rte('insertUnorderedList')" title="Маркированный список">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <button class="rte-btn" onclick="rte('insertOrderedList')" title="Нумерованный список">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <div class="rte-sep"></div>
+            <button class="rte-btn" onclick="rte('justifyLeft')" title="По левому краю">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h16"/></svg>
+            </button>
+            <button class="rte-btn" onclick="rte('justifyCenter')" title="По центру">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M4 18h16"/></svg>
+            </button>
+            <div class="rte-sep"></div>
+            <button class="rte-btn" onclick="rte('removeFormat')" title="Очистить форматирование" style="font-size:0.7rem;">✕Ф</button>
+        </div>
+        <div
+            id="rteEditor"
+            contenteditable="true"
+            spellcheck="false"
+        >
+            <p>Напишите здесь интерпретацию графика, ключевые выводы и анализ данных...</p>
+            <p><br></p>
+            <p>Используйте инструменты форматирования выше: <strong>жирный</strong>, <em>курсив</em>, <u>подчёркнутый</u>, маркированные списки.</p>
+        </div>
+        <p class="hint-tooltip mt-2 no-print">Этот текст будет виден при печати. Оформите выводы для отчёта Николаю Николаевичу.</p>
+    </div>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+    <div class="text-base font-semibold text-slate-300">
+        от Э <span class="heart">❤</span> для <span class="text-white font-bold">ЭЭУбд-07-25</span>
+    </div>
+    <div class="hint">
+        Сделайте скриншот графика или нажмите «Печать» — это ваш готовый отчёт для Николая Николаевича 📄
+    </div>
+</footer>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+// ============================================================
+//  STATE
+// ============================================================
+let chartInstance = null;
+let columns = []; // { id, name, color }
+let rows = [];    // [{ year, values: [...] }]
+let vLines = [];  // { year, label, color }
+let colIdCounter = 0;
+
+// ============================================================
+//  DEFAULT DATA
+// ============================================================
+const DEFAULT_COLS = [
+    { name: 'ВВП (%)',       color: '#1e40af' },
+    { name: 'Инфляция (%)',  color: '#991b1b' },
+];
+const DEFAULT_ROWS = [
+    { year: 2000, values: ['', ''] },
+    { year: 2001, values: ['', ''] },
+    { year: 2002, values: ['', ''] },
+    { year: 2003, values: ['', ''] },
+    { year: 2004, values: ['', ''] },
+    { year: 2005, values: ['', ''] },
+    { year: 2006, values: ['', ''] },
+    { year: 2007, values: ['', ''] },
+    { year: 2008, values: ['', ''] },
+    { year: 2009, values: ['', ''] },
+    { year: 2010, values: ['', ''] },
+    { year: 2011, values: ['', ''] },
+    { year: 2012, values: ['', ''] },
+    { year: 2013, values: ['', ''] },
+    { year: 2014, values: ['', ''] },
+    { year: 2015, values: ['', ''] },
+];
+const DEFAULT_VLINES = [];
+
+
+// ============================================================
+//  INIT
+// ============================================================
+function init() {
+    // Add default columns
+    DEFAULT_COLS.forEach(c => addColumnData(c.name, c.color));
+    // Add default rows
+    DEFAULT_ROWS.forEach(r => addRowData(r.year, r.values));
+    // Add default vlines
+    DEFAULT_VLINES.forEach(v => {
+        vLines.push({ ...v, id: Date.now() + Math.random() });
+    });
+    renderVLines();
+    renderTable();
+}
+
+// ============================================================
+//  COLUMN MANAGEMENT
+// ============================================================
+function addColumnData(name, color) {
+    const id = 'col_' + (colIdCounter++);
+    columns.push({ id, name, color });
+    // Add empty value to all existing rows
+    rows.forEach(r => r.values.push(''));
+    renderTable();
+}
+
+function addColumn() {
+    const pallete = ['#0f766e','#7c3aed','#d97706','#0369a1','#15803d','#be123c','#92400e'];
+    const color = pallete[columns.length % pallete.length];
+    addColumnData('Переменная ' + (columns.length + 1), color);
+}
+
+function removeColumn(id) {
+    const idx = columns.findIndex(c => c.id === id);
+    if (idx === -1) return;
+    if (columns.length <= 1) { alert('Должен остаться хотя бы один столбец.'); return; }
+    columns.splice(idx, 1);
+    rows.forEach(r => r.values.splice(idx, 1));
+    renderTable();
+}
+
+// ============================================================
+//  ROW MANAGEMENT
+// ============================================================
+function addRowData(year, values) {
+    // ID stored as string so HTML attribute round-trips match correctly
+    rows.push({ id: String(Date.now()) + '_' + String(Math.floor(Math.random() * 1e9)), year, values: [...values] });
+}
+
+function addRow() {
+    const lastYear = rows.length > 0 ? (Number(rows[rows.length - 1].year) + 1) : new Date().getFullYear();
+    addRowData(lastYear, columns.map(() => ''));
+    renderTable();
+}
+
+function removeRow(id) {
+    if (rows.length <= 1) { alert('Должна остаться хотя бы одна строка.'); return; }
+    rows = rows.filter(r => String(r.id) !== String(id));
+    renderTable();
+}
+
+// ============================================================
+//  TABLE RENDER
+// ============================================================
+function renderTable() {
+    const headerRow = document.getElementById('tableHeaderRow');
+    // Clear existing dynamic cols
+    while (headerRow.children.length > 2) {
+        headerRow.removeChild(headerRow.lastChild);
+    }
+    // Render column headers
+    columns.forEach(col => {
+        const th = document.createElement('th');
+        th.innerHTML = `
+            <div class="th-inner">
+                <input type="color" class="col-color-input" value="${col.color}"
+                    onchange="updateColColor('${col.id}', this.value)" title="Цвет линии">
+                <input type="text" class="col-name-input" value="${col.name}" placeholder="Название"
+                    onchange="updateColName('${col.id}', this.value)"
+                    oninput="updateColName('${col.id}', this.value)">
+                <span class="col-remove-btn" onclick="removeColumn('${col.id}')" title="Удалить столбец">✕</span>
+            </div>
+        `;
+        headerRow.appendChild(th);
+    });
+
+    // Render body
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    rows.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition-colors';
+
+        // Delete row cell
+        const delTd = document.createElement('td');
+        delTd.className = 'row-del-cell';
+        delTd.innerHTML = `<span class="row-del-btn" onclick="removeRow('${row.id}')" title="Удалить строку">✕</span>`;
+        tr.appendChild(delTd);
+
+        // Year cell
+        const yearTd = document.createElement('td');
+        yearTd.innerHTML = `<input type="number" value="${row.year}" onchange="updateYear('${row.id}', this.value)" class="font-semibold" style="font-weight:600;color:#0f172a;">`;
+        tr.appendChild(yearTd);
+
+        // Value cells
+        columns.forEach((col, ci) => {
+            const td = document.createElement('td');
+            td.innerHTML = `<input type="number" step="any" value="${row.values[ci] !== undefined ? row.values[ci] : ''}" placeholder="—"
+                onchange="updateValue('${row.id}', ${ci}, this.value)"
+                oninput="updateValue('${row.id}', ${ci}, this.value)">`;
+            tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+    });
+}
+
+function updateColName(id, val) {
+    const col = columns.find(c => c.id === id);
+    if (col) col.name = val;
+}
+
+function updateColColor(id, val) {
+    const col = columns.find(c => c.id === id);
+    if (col) col.color = val;
+}
+
+function updateYear(id, val) {
+    const row = rows.find(r => String(r.id) === String(id));
+    if (row) row.year = Number(val);
+}
+
+function updateValue(id, ci, val) {
+    const row = rows.find(r => String(r.id) === String(id));
+    if (row) row.values[ci] = val === '' ? null : Number(val);
+}
+
+// ============================================================
+//  VERTICAL LINES
+// ============================================================
+function addVLine() {
+    const year = Number(document.getElementById('vlineYear').value);
+    const label = document.getElementById('vlineLabel').value.trim();
+    const color = document.getElementById('vlineColor').value;
+    if (!year) { alert('Введите год.'); return; }
+    vLines.push({ id: Date.now(), year, label, color });
+    document.getElementById('vlineYear').value = '';
+    document.getElementById('vlineLabel').value = '';
+    renderVLines();
+}
+
+function removeVLine(id) {
+    vLines = vLines.filter(v => v.id !== id);
+    renderVLines();
+}
+
+function renderVLines() {
+    const container = document.getElementById('vlinesList');
+    if (vLines.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 italic">Вертикальных линий нет. Добавьте ниже.</p>';
+        return;
+    }
+    container.innerHTML = '';
+    vLines.forEach(v => {
+        const div = document.createElement('div');
+        div.className = 'vline-item fade-in';
+        div.innerHTML = `
+            <span style="display:inline-block;width:3px;height:24px;background:${v.color};border-radius:2px;flex-shrink:0;"></span>
+            <span class="font-semibold text-sm text-slate-700">${v.year}</span>
+            <span class="text-sm text-slate-500 flex-1">${v.label || '<em>без подписи</em>'}</span>
+            <button onclick="removeVLine(${v.id})" class="btn-danger" style="padding:4px 8px;font-size:0.72rem;">Удалить</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// ============================================================
+//  LINEAR REGRESSION (TRENDLINE)
+// ============================================================
+function linreg(data) {
+    const valid = data.map((y, i) => ({ x: i, y })).filter(p => p.y !== null && p.y !== '' && !isNaN(p.y));
+    if (valid.length < 2) return data.map(() => null);
+    const n = valid.length;
+    const xm = valid.reduce((s, p) => s + p.x, 0) / n;
+    const ym = valid.reduce((s, p) => s + p.y, 0) / n;
+    let num = 0, den = 0;
+    valid.forEach(p => { num += (p.x - xm) * (p.y - ym); den += (p.x - xm) ** 2; });
+    const slope = num / den;
+    const intercept = ym - slope * xm;
+    return data.map((_, i) => parseFloat((intercept + slope * i).toFixed(4)));
+}
+
+// ============================================================
+//  CHART BUILD
+// ============================================================
+function buildChart() {
+    // Collect & sort data
+    const sorted = [...rows].sort((a, b) => a.year - b.year);
+    const labels = sorted.map(r => String(r.year));
+
+    if (labels.length === 0) { alert('Добавьте хотя бы одну строку данных.'); return; }
+    if (columns.length === 0) { alert('Добавьте хотя бы один столбец.'); return; }
+
+    // Build datasets
+    const datasets = [];
+    const toggleButtons = [];
+
+    columns.forEach((col, ci) => {
+        const data = sorted.map(r => {
+            const v = r.values[ci];
+            return (v === null || v === '' || isNaN(v)) ? null : Number(v);
+        });
+        const trend = linreg(data);
+
+        // Main line dataset
+        datasets.push({
+            label: col.name,
+            data,
+            borderColor: col.color,
+            backgroundColor: hexToRgba(col.color, 0.08),
+            borderWidth: 2.5,
+            tension: 0.15,
+            pointRadius: 4,
+            pointBackgroundColor: col.color,
+            fill: ci === 0,
+            spanGaps: true,
+            _colId: col.id,
+            _isTrend: false,
+        });
+
+        // Trend line dataset
+        datasets.push({
+            label: `Тренд: ${col.name}`,
+            data: trend,
+            borderColor: adjustBrightness(col.color, 60),
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            borderDash: [8, 4],
+            tension: 0,
+            pointRadius: 0,
+            spanGaps: true,
+            _colId: col.id,
+            _isTrend: true,
+        });
+
+        // Toggle buttons
+        toggleButtons.push({ label: col.name, color: col.color, dsIdx: datasets.length - 2, isTrend: false });
+        toggleButtons.push({ label: `Тренд: ${col.name.substring(0, 12)}`, color: adjustBrightness(col.color, 60), dsIdx: datasets.length - 1, isTrend: true });
+    });
+
+    // Vline plugin
+    const vlinePlugin = {
+        id: 'vlinePlugin',
+        afterDraw(chart) {
+            const ctx = chart.ctx;
+            const xScale = chart.scales.x;
+            const yScale = chart.scales.y;
+            if (!xScale || !yScale) return;
+
+            vLines.forEach(vl => {
+                const labelIdx = labels.indexOf(String(vl.year));
+                if (labelIdx === -1) return;
+                const x = xScale.getPixelForValue(labelIdx);
+                ctx.save();
+                ctx.setLineDash([6, 4]);
+                ctx.strokeStyle = vl.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x, yScale.top);
+                ctx.lineTo(x, yScale.bottom);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Label bubble
+                if (vl.label) {
+                    ctx.font = 'bold 10px Inter';
+                    const textW = ctx.measureText(vl.label).width;
+                    const bx = x - textW / 2 - 5;
+                    const by = yScale.top + 6;
+                    ctx.fillStyle = vl.color;
+                    ctx.beginPath();
+                    // Manual rounded rect (cross-browser)
+                    const bw = textW + 10, bh = 18, br = 3;
+                    ctx.moveTo(bx + br, by);
+                    ctx.lineTo(bx + bw - br, by);
+                    ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + br);
+                    ctx.lineTo(bx + bw, by + bh - br);
+                    ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - br, by + bh);
+                    ctx.lineTo(bx + br, by + bh);
+                    ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - br);
+                    ctx.lineTo(bx, by + br);
+                    ctx.quadraticCurveTo(bx, by, bx + br, by);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = '#fff';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(vl.label, x, by + 13);
+                }
+                ctx.restore();
+            });
+        }
+    };
+
+    // Destroy old chart
+    if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+    }
+
+    const canvas = document.getElementById('mainChart');
+    chartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        plugins: [vlinePlugin],
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { boxWidth: 14, usePointStyle: true } },
+                tooltip: {
+                    backgroundColor: 'rgba(15,23,42,0.92)',
+                    padding: 12,
+                    cornerRadius: 4,
+                    callbacks: {
+                        label: ctx => {
+                            if (ctx.dataset._isTrend) return null;
+                            const val = ctx.parsed.y;
+                            return val !== null ? `${ctx.dataset.label}: ${val}` : null;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    title: { display: true, text: 'Значение', font: { weight: '600' } },
+                    grid: { color: '#e2e8f0' }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Update chart title
+    document.getElementById('chartTitle').textContent =
+        columns.map(c => c.name).join(', ') + ' (по годам)';
+
+    // Render toggle buttons
+    const row = document.getElementById('toggleButtonsRow');
+    row.innerHTML = '';
+    toggleButtons.forEach(btn => {
+        const b = document.createElement('button');
+        b.className = 'toggle-btn on';
+        b.id = 'tbtn_' + btn.dsIdx;
+        b.innerHTML = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${btn.color};flex-shrink:0;"></span>${btn.label}`;
+        b.onclick = () => toggleDataset(btn.dsIdx, b);
+        row.appendChild(b);
+    });
+
+    // Show section
+    const section = document.getElementById('chartResultSection');
+    section.style.display = 'block';
+    section.classList.add('fade-in');
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ============================================================
+//  TOGGLE DATASET
+// ============================================================
+function toggleDataset(idx, btn) {
+    if (!chartInstance) return;
+    const meta = chartInstance.getDatasetMeta(idx);
+    meta.hidden = !meta.hidden;
+    chartInstance.update();
+    btn.classList.toggle('on');
+    btn.classList.toggle('off');
+}
+
+
+// ============================================================
+//  RICH TEXT EDITOR
+// ============================================================
+function rte(cmd) {
+    document.getElementById('rteEditor').focus();
+    document.execCommand(cmd, false, null);
+}
+
+function rteFontSize(size) {
+    document.getElementById('rteEditor').focus();
+    const map = { small: '1', medium: '3', large: '5' };
+    document.execCommand('fontSize', false, map[size]);
+}
+
+// ============================================================
+//  PRINT
+// ============================================================
+function printReport() {
+    if (!chartInstance) {
+        if (!confirm('График ещё не построен. Всё равно распечатать?')) return;
+    }
+    window.print();
+}
+
+// ============================================================
+//  UTILS
+// ============================================================
+function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1,3),16);
+    const g = parseInt(hex.slice(3,5),16);
+    const b = parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function adjustBrightness(hex, pct) {
+    let r = parseInt(hex.slice(1,3),16);
+    let g = parseInt(hex.slice(3,5),16);
+    let b = parseInt(hex.slice(5,7),16);
+    r = Math.min(255, r + pct);
+    g = Math.min(255, g + pct);
+    b = Math.min(255, b + pct);
+    return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+}
+
+// Chart.defaults
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = '#475569';
+
+// ============================================================
+//  START
+// ============================================================
+init();
+
+</script>
+</body>
+</html>
