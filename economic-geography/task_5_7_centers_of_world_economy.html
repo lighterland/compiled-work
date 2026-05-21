@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Центры роста мировой экономики</title>
+<meta name="description" content="Анализ размещения штаб-квартир крупнейших ТНК мира по городам и регионам">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Merriweather:ital,wght@0,300;0,700;1,300&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; }
+  h1, h2, h3, h4, .serif { font-family: 'Merriweather', serif; }
+  .academic-header { background-color: #0f172a; border-bottom: 4px solid #7f1d1d; }
+
+  /* NAV */
+  .tab-btn { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    padding: 12px 16px; border: none; background: none; color: #64748b;
+    cursor: pointer; border-bottom: 2.5px solid transparent;
+    white-space: nowrap; transition: color .15s, border-color .15s; }
+  .tab-btn:hover { color: #1e293b; }
+  .tab-btn.active { color: #7f1d1d; border-bottom-color: #7f1d1d; }
+
+  /* SECTIONS */
+  .sec { display: none; }
+  .sec.active { display: block; animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+  /* MAP */
+  .map-wrap { position: relative; border-radius: 6px; overflow: hidden;
+    border: 1px solid #e2e8f0; background: #dde8f0; user-select: none; }
+  .map-wrap img { width: 100%; display: block; pointer-events: none; }
+  .dot { position: absolute; border-radius: 50%; transform: translate(-50%,-50%);
+    cursor: pointer; border: 2px solid rgba(255,255,255,.9);
+    box-shadow: 0 2px 6px rgba(0,0,0,.35);
+    transition: transform .15s, box-shadow .15s; z-index: 5; }
+  .dot:hover { transform: translate(-50%,-50%) scale(1.65);
+    box-shadow: 0 4px 14px rgba(0,0,0,.45); z-index: 20; }
+  .map-tip { position: absolute; z-index: 50;
+    background: rgba(15,23,42,.94); border: 1px solid #334155;
+    border-radius: 4px; padding: 10px 14px; font-size: 12px;
+    color: #f8fafc; pointer-events: none; display: none;
+    box-shadow: 0 4px 18px rgba(0,0,0,.3); min-width: 210px; line-height: 1.65; }
+  .map-tip b { font-weight: 600; font-size: 13px; display: block; margin-bottom: 4px; color: #fff; }
+  .map-tip .dim { color: #94a3b8; }
+
+  /* TABLE */
+  .tbl-wrap { overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 500px; }
+  thead th { text-align: left; padding: 10px 12px; font-weight: 600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: .05em; color: #64748b;
+    background: #f1f5f9; border-bottom: 1px solid #e2e8f0; }
+  tbody td { padding: 8px 12px; border-bottom: .5px solid #e2e8f0; vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: #f8fafc; }
+  .city-name { font-weight: 600; font-size: 13.5px; color: #1e293b; }
+  .city-en { font-size: 11px; color: #94a3b8; font-style: italic; }
+  .bdg { display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 99px; }
+  .bdg-d { background: #fee2e2; color: #7f1d1d; }
+  .bdg-t { background: #fef3c7; color: #78350f; }
+  .bdg-g { background: #dcfce7; color: #14532d; }
+  .hq-bar { display: flex; align-items: center; gap: 8px; }
+  .hq-fill { height: 5px; border-radius: 3px; background: #1e3a5f; opacity: .65; min-width: 2px; }
+
+  /* SUMMARY CARDS */
+  .reg-card { background: white; border: 1px solid #e2e8f0; border-radius: 6px;
+    padding: 16px; position: relative; overflow: hidden; }
+  .reg-card::before { content: ''; position: absolute; top:0; left:0; right:0; height: 3px; }
+
+  /* SOURCE CARDS */
+  .src-card { background: white; border: 1px solid #e2e8f0; border-radius: 6px;
+    padding: 16px 18px; margin-bottom: 10px; transition: border-color .15s; }
+  .src-card:hover { border-color: #94a3b8; }
+  .src-icon { width: 38px; height: 38px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .src-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px;
+    font-weight: 500; color: #1d4ed8; text-decoration: none; padding: 5px 11px;
+    border: 1px solid #bfdbfe; border-radius: 4px; background: #eff6ff; transition: background .15s; }
+  .src-link:hover { background: #dbeafe; }
+  .primary-tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px;
+    background: #dcfce7; color: #14532d; margin-left: 6px; vertical-align: middle; }
+  .note-box { background: #fffbeb; border: 1px solid #fcd34d;
+    border-left: 4px solid #f59e0b; border-radius: 0 4px 4px 0;
+    padding: 10px 14px; font-size: 12.5px; color: #78350f; line-height: 1.65; margin-top: 14px; }
+</style>
+</head>
+<body class="antialiased">
+
+<!-- HEADER -->
+<header class="academic-header text-white py-10 shadow-md">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <p class="text-red-300 text-xs font-semibold uppercase tracking-widest mb-2">Штаб-квартиры ТНК · Мировая экономика</p>
+    <h1 class="text-3xl md:text-4xl font-bold tracking-tight serif">Центры роста мировой экономики</h1>
+    <p class="mt-3 text-slate-300 text-base font-light">Размещение штаб-квартир крупнейших ТНК по городам мира · Fortune Global 500 (2023)</p>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto">
+    <button class="tab-btn active" onclick="showTab('map',this)">🗺 Карта</button>
+    <button class="tab-btn" onclick="showTab('table',this)">📋 Города и данные</button>
+    <button class="tab-btn" onclick="showTab('summary',this)">📊 По регионам</button>
+    <button class="tab-btn" onclick="showTab('concl',this)">✏️ Выводы</button>
+    <button class="tab-btn" onclick="showTab('sources',this)">📚 Источники</button>
+  </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+<!-- MAP -->
+<section class="sec active" id="sec-map">
+  <div class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+    <div class="mb-4 border-b border-slate-200 pb-4">
+      <h2 class="text-xl font-bold text-slate-800 serif">Города мира с наибольшим числом штаб-квартир ТНК</h2>
+      <p class="text-sm text-slate-500 mt-1">Размер пунсона пропорционален числу штаб-квартир · Наведите курсор для информации о городе</p>
+    </div>
+    <div class="map-wrap" id="mapWrap">
+      <img id="mapImg" src="./%D0%9A%D0%B0%D1%80%D1%82%D0%B0%20%D0%BC%D0%B8%D1%80%D0%B0_%D0%9A%D0%BE%D0%BD%D1%82%D1%83%D1%80%D0%BD%D0%B0%D1%8F.jpg" alt="Карта мира контурная">
+      <div id="dotsLayer"></div>
+      <div class="map-tip" id="tooltip"></div>
+    </div>
+    <!-- LEGEND -->
+    <div class="flex flex-wrap gap-4 mt-4 p-3 bg-slate-50 border border-slate-200 text-xs text-slate-600 rounded">
+      <span class="flex items-center gap-2"><span style="width:11px;height:11px;border-radius:50%;background:#b91c1c;border:2px solid rgba(255,255,255,.85);box-shadow:0 1px 4px rgba(0,0,0,.2);display:inline-block;"></span>Развитые страны</span>
+      <span class="flex items-center gap-2"><span style="width:11px;height:11px;border-radius:50%;background:#d97706;border:2px solid rgba(255,255,255,.85);box-shadow:0 1px 4px rgba(0,0,0,.2);display:inline-block;"></span>Переходная экономика</span>
+      <span class="flex items-center gap-2"><span style="width:11px;height:11px;border-radius:50%;background:#15803d;border:2px solid rgba(255,255,255,.85);box-shadow:0 1px 4px rgba(0,0,0,.2);display:inline-block;"></span>Развивающиеся страны</span>
+    </div>
+  </div>
+</section>
+
+<!-- TABLE -->
+<section class="sec" id="sec-table">
+  <div class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+    <div class="mb-4 border-b border-slate-200 pb-4">
+      <h2 class="text-xl font-bold text-slate-800 serif">Города и данные о численности населения</h2>
+      <p class="text-sm text-slate-500 mt-1">Источник: ООН ВУП 2025 (DEGURBA) · Fortune Global 500 (2023)</p>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Город</th><th>Страна</th><th>Регион</th>
+            <th>Тип страны</th><th>Штаб-квартир</th><th>Нас., млн</th>
+          </tr>
+        </thead>
+        <tbody id="mainTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- SUMMARY -->
+<section class="sec" id="sec-summary">
+  <div class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+    <div class="mb-4 border-b border-slate-200 pb-4">
+      <h2 class="text-xl font-bold text-slate-800 serif">Сводная таблица по регионам</h2>
+      <p class="text-sm text-slate-500 mt-1">Группировка городов по географическим регионам</p>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6" id="sumGrid"></div>
+    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Число штаб-квартир ТНК по регионам мира</p>
+    <div style="position:relative;width:100%;height:240px;">
+      <canvas id="regChart"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- CONCLUSIONS -->
+<section class="sec" id="sec-concl">
+  <div class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+    <div class="mb-5 border-b border-slate-200 pb-4">
+      <h2 class="text-xl font-bold text-slate-800 serif">Выводы</h2>
+    </div>
+    <div id="conclBox" class="space-y-3"></div>
+  </div>
+</section>
+
+<!-- SOURCES -->
+<section class="sec" id="sec-sources">
+  <div class="bg-white shadow-sm border border-slate-200 p-6 mb-6">
+    <div class="mb-5 border-b border-slate-200 pb-4">
+      <h2 class="text-xl font-bold text-slate-800 serif">Источники данных</h2>
+      <p class="text-sm text-slate-500 mt-1">Ссылки на официальные источники</p>
+    </div>
+
+    <div class="src-card">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="src-icon" style="background:#fee2e2;">📊</div>
+        <div>
+          <div class="font-semibold text-sm text-slate-800">Fortune Global 500 (2023) <span class="primary-tag">Число штаб-квартир ТНК</span></div>
+          <div class="text-xs text-slate-500">Fortune Magazine · Ежегодный официальный рейтинг</div>
+        </div>
+      </div>
+      <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+        <strong class="text-slate-700">Что используется:</strong> Число штаб-квартир крупнейших ТНК в каждом городе. Охватывает 500 крупнейших компаний мира по выручке за 2022 год.
+      </p>
+      <div class="flex flex-wrap gap-2">
+        <a class="src-link" href="https://fortune.com/ranking/global500/" target="_blank">↗ fortune.com/ranking/global500</a>
+        <a class="src-link" href="https://fortune.com/2023/08/02/headquarters-cities-global-500-companies-2023-beijing/" target="_blank">↗ Анализ по городам (авг. 2023)</a>
+      </div>
+    </div>
+
+    <div class="src-card">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="src-icon" style="background:#dcfce7;">🏙</div>
+        <div>
+          <div class="font-semibold text-sm text-slate-800">ООН ВУП 2025 — DEGURBA <span class="primary-tag">Численность населения</span></div>
+          <div class="text-xs text-slate-500">ООН ДЭСВ (UN DESA) · Отдел народонаселения · 2025</div>
+        </div>
+      </div>
+      <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+        <strong class="text-slate-700">Что используется:</strong> Численность населения городских агломераций (млн чел.) на 2025 год по методологии DEGURBA — непрерывная застроенная территория с плотностью выше 1 500 чел./км² и населением от 50 000 чел. Данные подтверждены через <a href="https://luminocity3d.org/WorldCity/" target="_blank" class="text-blue-600 hover:underline">luminocity3d.org</a>, которая напрямую использует исходный файл ВУП 2025.
+      </p>
+      <div class="flex flex-wrap gap-2">
+        <a class="src-link" href="https://population.un.org/wup/" target="_blank">↗ population.un.org/wup</a>
+        <a class="src-link" href="https://population.un.org/wup/assets/Download/Cities/WUP2025-F21-DEGURBA-Cities_Pop.xlsx" target="_blank">↗ Скачать xlsx</a>
+        <a class="src-link" href="https://luminocity3d.org/WorldCity/" target="_blank">↗ Интерактивная карта</a>
+      </div>
+    </div>
+
+    <div class="src-card">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="src-icon" style="background:#fef3c7;">🌐</div>
+        <div>
+          <div class="font-semibold text-sm text-slate-800">МВФ — Классификация стран (WEO 2023) <span class="primary-tag">Тип страны</span></div>
+          <div class="text-xs text-slate-500">Международный валютный фонд · Апрель 2023</div>
+        </div>
+      </div>
+      <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+        <strong class="text-slate-700">Что используется:</strong> Классификация стран: развитые (Advanced Economies) — красный; переходная экономика (Россия) — оранжевый; развивающиеся (Китай, Индия и др.) — зелёный.
+      </p>
+      <div class="flex flex-wrap gap-2">
+        <a class="src-link" href="https://www.imf.org/en/publications/weo/weo-database/2023/april/groups-and-aggregates" target="_blank">↗ IMF WEO — Классификация 2023</a>
+      </div>
+    </div>
+
+    <div class="note-box">
+      ⚠️ <strong>Примечание:</strong> Данные ВУП 2025 (DEGURBA) отличаются от ВУП 2018 из-за новой методологии — цифры несопоставимы напрямую.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = '#475569';
+
+// ── DATA ──────────────────────────────────────────────────────────────────
+// All population: UN WUP 2025 DEGURBA
+const cities = [
+  {city:"Пекин",     en:"Beijing",   country:"Китай",          region:"Азия",   type:"g",hq:57,pop:22.6,lat:39.9042,lng:116.4074},
+  {city:"Токио",     en:"Tokyo",     country:"Япония",         region:"Азия",   type:"d",hq:37,pop:33.4,lat:35.6762,lng:139.6503},
+  {city:"Париж",     en:"Paris",     country:"Франция",        region:"Европа", type:"d",hq:17,pop:11.4,lat:48.8566,lng:2.3522},
+  {city:"Нью-Йорк",  en:"New York",  country:"США",            region:"Америка",type:"d",hq:17,pop:19.0,lat:40.7128,lng:-74.0060},
+  {city:"Лондон",    en:"London",    country:"Великобритания", region:"Европа", type:"d",hq:17,pop:9.9, lat:51.5074,lng:-0.1278},
+  {city:"Сеул",      en:"Seoul",     country:"Респ. Корея",    region:"Азия",   type:"d",hq:11,pop:22.5,lat:37.5665,lng:126.9780},
+  {city:"Шанхай",    en:"Shanghai",  country:"Китай",          region:"Азия",   type:"g",hq:9, pop:29.6,lat:31.2304,lng:121.4737},
+  {city:"Цюрих",     en:"Zurich",    country:"Швейцария",      region:"Европа", type:"d",hq:7, pop:0.44,lat:47.3769,lng:8.5417},
+  {city:"Осака",     en:"Osaka",     country:"Япония",         region:"Азия",   type:"d",hq:7, pop:18.9,lat:34.6937,lng:135.5023},
+  {city:"Хьюстон",   en:"Houston",   country:"США",            region:"Америка",type:"d",hq:7, pop:2.3, lat:29.7604,lng:-95.3698},
+  {city:"Гонконг",   en:"Hong Kong", country:"Китай (САР)",    region:"Азия",   type:"d",hq:7, pop:7.8, lat:22.3193,lng:114.1694},
+  {city:"Торонто",   en:"Toronto",   country:"Канада",         region:"Америка",type:"d",hq:6, pop:6.3, lat:43.6532,lng:-79.3832},
+  {city:"Шэньчжэнь", en:"Shenzhen",  country:"Китай",          region:"Азия",   type:"g",hq:5, pop:13.5,lat:22.5431,lng:114.0579},
+  {city:"Мумбай",    en:"Mumbai",    country:"Индия",          region:"Азия",   type:"g",hq:5, pop:20.2,lat:19.0760,lng:72.8777},
+  {city:"Москва",    en:"Moscow",    country:"Россия",         region:"Европа", type:"t",hq:5, pop:12.8,lat:55.7558,lng:37.6173},
+  {city:"Мадрид",    en:"Madrid",    country:"Испания",        region:"Европа", type:"d",hq:5, pop:6.7, lat:40.4168,lng:-3.7038},
+  {city:"Тайбэй",    en:"Taipei",    country:"Тайвань",        region:"Азия",   type:"d",hq:4, pop:2.7, lat:25.0330,lng:121.5654},
+  {city:"Мюнхен",    en:"Munich",    country:"Германия",       region:"Европа", type:"d",hq:4, pop:1.56,lat:48.1351,lng:11.5820},
+  {city:"Чикаго",    en:"Chicago",   country:"США",            region:"Америка",type:"d",hq:4, pop:8.6, lat:41.8781,lng:-87.6298},
+  {city:"Атланта",   en:"Atlanta",   country:"США",            region:"Америка",type:"d",hq:4, pop:0.5, lat:33.7490,lng:-84.3880},
+];
+
+const TC = {d:"#b91c1c", t:"#d97706", g:"#15803d"};
+const TL = {d:"Развитые", t:"Переходная", g:"Развивающиеся"};
+const TBdg = {d:"bdg bdg-d", t:"bdg bdg-t", g:"bdg bdg-g"};
+
+// ── TABLE ──────────────────────────────────────────────────────────────────
+const mxHQ = Math.max(...cities.map(c => c.hq));
+const tb = document.getElementById('mainTbody');
+cities.forEach((c, i) => {
+  const tr = document.createElement('tr');
+  const bw = Math.round(c.hq / mxHQ * 80);
+  tr.innerHTML = `
+    <td class="text-slate-400 text-xs">${i+1}</td>
+    <td><div class="city-name">${c.city}</div><div class="city-en">${c.en}</div></td>
+    <td class="text-sm">${c.country}</td>
+    <td class="text-sm">${c.region}</td>
+    <td><span class="${TBdg[c.type]}">${TL[c.type]}</span></td>
+    <td><div class="hq-bar"><span class="font-semibold text-sm min-w-[24px]">${c.hq}</span>
+      <div class="hq-fill" style="width:${bw}px"></div></div></td>
+    <td class="text-center text-sm">${c.pop.toFixed(2)}</td>`;
+  tb.appendChild(tr);
+});
+
+// ── SUMMARY ────────────────────────────────────────────────────────────────
+const regs = ["Азия","Европа","Америка","Африка","Австралия и Океания"];
+const RC = {Азия:"#be185d", Европа:"#4338ca", Америка:"#1d4ed8", "Африка":"#15803d", "Австралия и Океания":"#0f766e"};
+const rd = {};
+regs.forEach(r => rd[r] = {hq:0, n:0});
+cities.forEach(c => { rd[c.region].hq += c.hq; rd[c.region].n += 1; });
+const tot = cities.reduce((s,c) => s + c.hq, 0);
+
+const sg = document.getElementById('sumGrid');
+regs.forEach(r => {
+  const d = rd[r];
+  const div = document.createElement('div');
+  div.className = 'reg-card';
+  div.style.cssText = `--accent:${RC[r]}`;
+  div.innerHTML = `<div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">${r}</div>
+    <div class="text-3xl font-bold serif" style="color:${RC[r]}">${d.hq}</div>
+    <div class="text-xs text-slate-400 mt-1">${d.n} ${d.n===1?'город':(d.n<5?'города':'городов')} · ${Math.round(d.hq/tot*100)}%</div>
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${RC[r]};border-radius:6px 6px 0 0;"></div>`;
+  sg.appendChild(div);
+});
+
+setTimeout(() => {
+  new Chart(document.getElementById('regChart'), {
+    type: 'bar',
+    data: { labels: regs,
+      datasets: [{ label: 'Штаб-квартир ТНК',
+        data: regs.map(r => rd[r].hq),
+        backgroundColor: regs.map(r => RC[r]),
+        borderRadius: 4, borderSkipped: false }]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } } } }
+  });
+}, 300);
+
+// ── CONCLUSIONS ────────────────────────────────────────────────────────────
+const concls = [
+  "Большинство штаб-квартир крупнейших ТНК сосредоточено в <strong>Азии</strong> — прежде всего в Китае и Японии. На этот регион приходится более половины всех штаб-квартир из списка, что свидетельствует о возрастающей роли азиатских экономик в мировом хозяйстве.",
+  "<strong>Европа</strong> занимает второе место по числу штаб-квартир ТНК. Ведущие позиции в регионе занимают Лондон, Париж и Мадрид, что подтверждает сохранение значения традиционных финансовых центров в глобальной экономике.",
+  "Подавляющее большинство штаб-квартир ТНК расположено в <strong>экономически развитых странах</strong>. Это объясняется высокой концентрацией капитала, передовых технологий и квалифицированной рабочей силы именно в этих странах.",
+  "<strong>Китай</strong> как развивающаяся страна занимает лидирующую позицию: Пекин находится на первом месте в мире по числу штаб-квартир ТНК (57 компаний), что отражает стремительный рост китайских ТНК за последние два десятилетия.",
+  "<strong>Африка и Австралия</strong> практически не представлены в данном списке, что свидетельствует о периферийном положении этих регионов в системе глобального корпоративного управления.",
+];
+const cb = document.getElementById('conclBox');
+concls.forEach((t, i) => {
+  const d = document.createElement('div');
+  d.className = 'p-4 bg-white border border-slate-200 rounded border-l-4 text-sm leading-relaxed text-slate-700';
+  d.style.borderLeftColor = '#7f1d1d';
+  d.innerHTML = `<span class="font-semibold text-slate-400 mr-2">${i+1}.</span>${t}`;
+  cb.appendChild(d);
+});
+
+// ── MAP ────────────────────────────────────────────────────────────────────
+// Equirectangular projection calibrated from the reference image:
+// Control points: Moscow (orange dot) = 55.756N,37.617E → (60.746%,25.754%)
+//                 Houston anchor     = 29.760N,-95.370E → (23.528%,45.680%)
+// Verified: Tokyo  (89.31%,41.15%) vs reference (89.29%,40.76%) ✓
+//           NY     (29.51%,37.30%) vs reference (29.91%,38.13%) ✓
+//           London (50.19%,29.04%)                              ✓
+//           Paris  (50.88%,31.07%)                              ✓
+//           Madrid (49.19%,37.53%)                              ✓
+const LNG_MIN = -179.431, LNG_MAX = 177.845;
+const LAT_MAX =   89.457, LAT_MIN = -41.228;
+
+// Minimal pixel-exact overrides for cities whose formula point falls on
+// a coastal/sea pixel (detected by scanning Карта мира_Контурная.jpg).
+// All other cities use pure formula.
+const MAP_OVERRIDE = {
+  "Токио":      [89.254, 41.043],  // +2px  – Sea of Japan coastal pixel
+  "Сеул":       [85.651, 39.942],  // +4px  – Yellow Sea coastal pixel
+  "Шанхай":     [83.897, 45.159],  // +10px – East China Sea
+  "Гонконг":    [81.728, 50.435],  // +16px – South China Sea
+  "Шэньчжэнь":  [81.728, 50.435],  // +13px – co-located with HK
+  "Тайбэй":     [83.865, 48.870],  // +12px – Taiwan Strait
+  "Чикаго":     [25.542, 36.116],  // +5px  – Lake Michigan
+};
+
+function toXY(city_name, lat, lng) {
+  if (MAP_OVERRIDE[city_name]) return MAP_OVERRIDE[city_name];
+  const x = (lng - LNG_MIN) / (LNG_MAX - LNG_MIN) * 100;
+  const y = (LAT_MAX - lat) / (LAT_MAX - LAT_MIN) * 100;
+  return [x, y];
+}
+
+function placeDots() {
+  const img  = document.getElementById('mapImg');
+  const wrap = document.getElementById('mapWrap');
+  const layer = document.getElementById('dotsLayer');
+  if (!img.complete || img.naturalWidth === 0) { setTimeout(placeDots, 200); return; }
+  layer.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
+  layer.innerHTML = '';
+  const tip = document.getElementById('tooltip');
+
+  const mx = Math.max(...cities.map(c => c.hq));
+
+  cities.forEach(c => {
+    const [xp, yp] = toXY(c.city, c.lat, c.lng);
+    const sz = 7 + (c.hq / mx) * 20;
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.style.cssText = `left:${xp.toFixed(3)}%;top:${yp.toFixed(3)}%;width:${sz}px;height:${sz}px;background:${TC[c.type]};pointer-events:auto;`;
+
+    const bdgStyle = `display:inline-block;font-size:10px;padding:1px 7px;border-radius:99px;font-weight:600;background:${
+      c.type==='d'?'#fee2e2':c.type==='t'?'#fef3c7':'#dcfce7'};color:${
+      c.type==='d'?'#7f1d1d':c.type==='t'?'#78350f':'#14532d'};`;
+
+    dot.addEventListener('mouseenter', () => {
+      tip.style.display = 'block';
+      tip.innerHTML = `<b>${c.city} / ${c.en}</b>
+        <span class="dim">Страна:</span> ${c.country}<br>
+        <span class="dim">Регион:</span> ${c.region}<br>
+        <span class="dim">Тип:</span> <span style="${bdgStyle}">${TL[c.type]}</span><br>
+        <span class="dim">Штаб-квартир ТНК:</span> <strong style="color:#fff">${c.hq}</strong><br>
+        <span class="dim">Население:</span> <strong style="color:#fff">${c.pop.toFixed(2)} млн</strong>`;
+    });
+    dot.addEventListener('mousemove', e => {
+      const r = wrap.getBoundingClientRect();
+      let tx = e.clientX - r.left + 15, ty = e.clientY - r.top - 8;
+      if (tx + 230 > wrap.offsetWidth) tx -= 245;
+      if (ty + 140 > wrap.offsetHeight) ty -= 145;
+      tip.style.left = tx + 'px'; tip.style.top = ty + 'px';
+    });
+    dot.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+    layer.appendChild(dot);
+  });
+}
+
+let _rt;
+window.addEventListener('resize', () => { clearTimeout(_rt); _rt = setTimeout(placeDots, 150); });
+document.getElementById('mapImg').addEventListener('load', placeDots);
+setTimeout(placeDots, 400);
+
+// ── TABS ───────────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'map') setTimeout(placeDots, 60);
+}
+</script>
+</body>
+</html>
