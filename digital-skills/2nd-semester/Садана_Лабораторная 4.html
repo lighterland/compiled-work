@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Садана: Лабораторная работа 4 — Excel Web Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --header-bg: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --excel-header-bg: #f8fafc;
+      --excel-header-text: #64748b;
+      --excel-grid-line: #e2e8f0;
+      --excel-cell-text: #1e293b;
+      --excel-cell-bg: #ffffff;
+      
+      --active-cell-border: #3b82f6;
+      --active-header-bg: #eff6ff;
+      --active-header-text: #1d4ed8;
+      
+      --primary: #6366f1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Top Navigation bar */
+    .top-nav {
+      background-color: var(--header-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .back-btn {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .back-btn:hover {
+      color: var(--text-main);
+    }
+
+    .title-area {
+      text-align: center;
+    }
+
+    .title-area h1 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 0.15rem;
+    }
+
+    .badge-lock {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* Description bar */
+    .description-bar {
+      background: rgba(30, 41, 59, 0.5);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.6rem 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Formula Bar */
+    .formula-bar {
+      background-color: #ffffff;
+      border-bottom: 1px solid #cbd5e1;
+      padding: 0.35rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .cell-address {
+      background-color: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 0.25rem 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #334155;
+      min-width: 60px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .formula-fx {
+      color: #94a3b8;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: bold;
+      font-style: italic;
+      font-size: 0.9rem;
+      user-select: none;
+    }
+
+    .formula-input {
+      flex: 1;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 0.25rem 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #0f172a;
+      outline: none;
+    }
+
+    /* Spreadsheet Container */
+    .sheet-viewport {
+      flex: 1;
+      overflow: auto;
+      background-color: #f1f5f9;
+      position: relative;
+    }
+
+    /* Protection Watermark Overlay */
+    .watermark-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 10;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='150' viewBox='0 0 250 150'%3E%3Ctext fill='rgba(15, 23, 42, 0.04)' font-size='11' font-family='sans-serif' x='20' y='50' transform='rotate(-20 20 50)'%3EPREVIEW ONLY - FORMULAS VISIBLE%3C/text%3E%3C/svg%3E");
+    }
+
+    /* Excel Table Style */
+    table.excel-table {
+      border-collapse: collapse;
+      background-color: var(--excel-cell-bg);
+      color: var(--excel-cell-text);
+      font-size: 0.825rem;
+      table-layout: fixed;
+    }
+
+    table.excel-table th, table.excel-table td {
+      border: 1px solid var(--excel-grid-line);
+      padding: 4px 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Header Row and Col cells */
+    table.excel-table th {
+      background-color: var(--excel-header-bg);
+      color: var(--excel-header-text);
+      font-weight: 500;
+      text-align: center;
+      user-select: none;
+      position: sticky;
+      z-index: 2;
+    }
+
+    table.excel-table th.col-header {
+      top: 0;
+      height: 24px;
+    }
+
+    table.excel-table th.row-header {
+      left: 0;
+      width: 44px;
+      z-index: 3;
+    }
+
+    table.excel-table th.corner-header {
+      top: 0;
+      left: 0;
+      z-index: 4;
+      width: 44px;
+      height: 24px;
+    }
+
+    /* Selected cell states */
+    table.excel-table td.cell {
+      cursor: cell;
+      position: relative;
+    }
+
+    table.excel-table td.cell.selected {
+      outline: 2px solid var(--active-cell-border);
+      outline-offset: -2px;
+      background-color: #f0f7ff !important;
+    }
+
+    table.excel-table th.active-header {
+      background-color: var(--active-header-bg) !important;
+      color: var(--active-header-text) !important;
+      font-weight: 700;
+    }
+
+    /* Tab Bar at the bottom */
+    .tab-bar {
+      background-color: #f1f5f9;
+      border-top: 1px solid #cbd5e1;
+      padding: 0.35rem 0.75rem 0;
+      display: flex;
+      gap: 0.25rem;
+      flex-shrink: 0;
+      overflow-x: auto;
+    }
+
+    .sheet-tab {
+      background-color: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      border-bottom: none;
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #475569;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .sheet-tab:hover {
+      background-color: #cbd5e1;
+    }
+
+    .sheet-tab.active {
+      background-color: #ffffff;
+      color: #0f172a;
+      font-weight: 700;
+      border-bottom: 1px solid #ffffff;
+      margin-bottom: -1px;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation bar -->
+  <div class="top-nav">
+    <a href="index.html" class="back-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to Directory
+    </a>
+    <div class="title-area">
+      <h1>Садана: Лабораторная работа 4</h1>
+    </div>
+    <span class="badge-lock">🔒 Download Locked until June 8, 2026</span>
+  </div>
+
+  <!-- Description bar -->
+  <div class="description-bar">
+    <span><strong>Description:</strong> Расчет счета из магазина и анализ показателей продаж с применением формул и регрессии.</span>
+    <span>Click any cell to inspect its Excel formula. Copying is disabled.</span>
+  </div>
+
+  <!-- Formula Bar -->
+  <div class="formula-bar">
+    <div id="cell-address" class="cell-address">A1</div>
+    <span class="formula-fx">fx</span>
+    <input id="formula-input" class="formula-input" type="text" readonly value="">
+  </div>
+
+  <!-- Sheet Viewport -->
+  <div class="sheet-viewport" id="sheet-viewport">
+    <div class="watermark-overlay"></div>
+    <table class="excel-table" id="excel-table">
+      <!-- Generated dynamically by JS -->
+    </table>
+  </div>
+
+  <!-- Sheet Tab Bar -->
+  <div class="tab-bar" id="tab-bar">
+    <!-- Generated dynamically by JS -->
+  </div>
+
+  <script>
+    // Embedded parsed spreadsheet data
+    const workbookData = {"Счет из магазина":{"ref":"B1:Q21","range":{"s":{"c":1,"r":0},"e":{"c":16,"r":20}},"cells":{"B1":{"v":"Счет из магазина","w":"Счет из магазина","f":null,"t":"s"},"B2":{"v":"Наименование товара","w":"Наименование товара","f":null,"t":"s"},"C2":{"v":"Единица измерения","w":"Единица измерения","f":null,"t":"s"},"D2":{"v":"Цена","w":"Цена","f":null,"t":"s"},"E2":{"v":"Количество","w":"Количество","f":null,"t":"s"},"F2":{"v":"Стоимость","w":"Стоимость","f":null,"t":"s"},"G2":{"v":"Стоимость со скидкой","w":"Стоимость со скидкой","f":null,"t":"s"},"H2":{"v":0.05,"w":"5%","f":null,"t":"n"},"B3":{"v":"Хлеб","w":"Хлеб","f":null,"t":"s"},"C3":{"v":"штуки","w":"штуки","f":null,"t":"s"},"D3":{"v":45,"w":" 45.00 ","f":null,"t":"n"},"E3":{"v":12,"w":"12","f":null,"t":"n"},"F3":{"v":540,"w":" 540.00 ","f":"D3*E3","t":"n"},"G3":{"v":513,"w":" 513.00 ","f":"F3-F3*$H$2","t":"n"},"B4":{"v":"Молоко","w":"Молоко","f":null,"t":"s"},"C4":{"v":"литры","w":"литры","f":null,"t":"s"},"D4":{"v":70,"w":" 70.00 ","f":null,"t":"n"},"E4":{"v":8,"w":"8","f":null,"t":"n"},"F4":{"v":560,"w":" 560.00 ","f":"D4*E4","t":"n"},"G4":{"v":532,"w":" 532.00 ","f":"F4-F4*$H$2","t":"n"},"B5":{"v":"Сахар","w":"Сахар","f":null,"t":"s"},"C5":{"v":"килограммы","w":"килограммы","f":null,"t":"s"},"D5":{"v":60,"w":" 60.00 ","f":null,"t":"n"},"E5":{"v":5,"w":"5","f":null,"t":"n"},"F5":{"v":300,"w":" 300.00 ","f":"D5*E5","t":"n"},"G5":{"v":285,"w":" 285.00 ","f":"F5-F5*$H$2","t":"n"},"B6":{"v":"Яблоки","w":"Яблоки","f":null,"t":"s"},"C6":{"v":"килограммы","w":"килограммы","f":null,"t":"s"},"D6":{"v":95,"w":" 95.00 ","f":null,"t":"n"},"E6":{"v":6,"w":"6","f":null,"t":"n"},"F6":{"v":570,"w":" 570.00 ","f":"D6*E6","t":"n"},"G6":{"v":541.5,"w":" 541.50 ","f":"F6-F6*$H$2","t":"n"},"B7":{"v":"Сыр","w":"Сыр","f":null,"t":"s"},"C7":{"v":"килограммы","w":"килограммы","f":null,"t":"s"},"D7":{"v":520,"w":" 520.00 ","f":null,"t":"n"},"E7":{"v":2,"w":"2","f":null,"t":"n"},"F7":{"v":1040,"w":" 1,040.00 ","f":"D7*E7","t":"n"},"G7":{"v":988,"w":" 988.00 ","f":"F7-F7*$H$2","t":"n"},"B8":{"v":"Масло сливочное","w":"Масло сливочное","f":null,"t":"s"},"C8":{"v":"штуки","w":"штуки","f":null,"t":"s"},"D8":{"v":180,"w":" 180.00 ","f":null,"t":"n"},"E8":{"v":3,"w":"3","f":null,"t":"n"},"F8":{"v":540,"w":" 540.00 ","f":"D8*E8","t":"n"},"G8":{"v":513,"w":" 513.00 ","f":"F8-F8*$H$2","t":"n"},"B9":{"v":"Яйца","w":"Яйца","f":null,"t":"s"},"C9":{"v":"десяток","w":"десяток","f":null,"t":"s"},"D9":{"v":110,"w":" 110.00 ","f":null,"t":"n"},"E9":{"v":4,"w":"4","f":null,"t":"n"},"F9":{"v":440,"w":" 440.00 ","f":"D9*E9","t":"n"},"G9":{"v":418,"w":" 418.00 ","f":"F9-F9*$H$2","t":"n"},"B10":{"v":"Курица","w":"Курица","f":null,"t":"s"},"C10":{"v":"килограммы","w":"килограммы","f":null,"t":"s"},"D10":{"v":260,"w":" 260.00 ","f":null,"t":"n"},"E10":{"v":3,"w":"3","f":null,"t":"n"},"F10":{"v":780,"w":" 780.00 ","f":"D10*E10","t":"n"},"G10":{"v":741,"w":" 741.00 ","f":"F10-F10*$H$2","t":"n"},"B11":{"v":"Чай","w":"Чай","f":null,"t":"s"},"C11":{"v":"упаковка","w":"упаковка","f":null,"t":"s"},"D11":{"v":210,"w":" 210.00 ","f":null,"t":"n"},"E11":{"v":2,"w":"2","f":null,"t":"n"},"F11":{"v":420,"w":" 420.00 ","f":"D11*E11","t":"n"},"G11":{"v":399,"w":" 399.00 ","f":"F11-F11*$H$2","t":"n"},"B12":{"v":"Вода минеральная","w":"Вода минеральная","f":null,"t":"s"},"C12":{"v":"литры","w":"литры","f":null,"t":"s"},"D12":{"v":35,"w":" 35.00 ","f":null,"t":"n"},"E12":{"v":10,"w":"10","f":null,"t":"n"},"F12":{"v":350,"w":" 350.00 ","f":"D12*E12","t":"n"},"G12":{"v":332.5,"w":" 332.50 ","f":"F12-F12*$H$2","t":"n"},"B13":{"v":"Итого","w":"Итого","f":null,"t":"s"},"F13":{"v":5540,"w":" 5,540.00 ","f":"SUM(F3:F12)","t":"n"},"G13":{"v":5263,"w":" 5,263.00 ","f":"SUM(G3:G12)","t":"n"}}},"Продажи":{"ref":"A1:Q8","range":{"s":{"c":0,"r":0},"e":{"c":16,"r":7}},"cells":{"B1":{"v":"Январь","w":"Январь","f":null,"t":"s"},"C1":{"v":"Февраль","w":"Февраль","f":null,"t":"s"},"D1":{"v":"Март","w":"Март","f":null,"t":"s"},"E1":{"v":"Апрель","w":"Апрель","f":null,"t":"s"},"F1":{"v":"Май","w":"Май","f":null,"t":"s"},"J1":{"v":"avg","w":"avg","f":null,"t":"s"},"O1":{"v":"sum","w":"sum","f":null,"t":"s"},"Q1":{"v":"Y=a+b*X","w":"Y=a+b*X","f":null,"t":"s"},"A2":{"v":"Объем продаж","w":"Объем продаж","f":null,"t":"s"},"B2":{"v":33,"w":"33","f":null,"t":"n"},"C2":{"v":43,"w":"43","f":null,"t":"n"},"D2":{"v":58,"w":"58","f":null,"t":"n"},"E2":{"v":74,"w":"74","f":null,"t":"n"},"F2":{"v":81,"w":"81","f":"ROUND(E2*1.1,0)","t":"n"},"J2":{"v":52,"w":"52","f":"AVERAGE(B2:E2)","t":"n"},"A3":{"v":"Цена за 1 шт.","w":"Цена за 1 шт.","f":null,"t":"s"},"B3":{"v":11450,"w":" 11,450.00 ","f":null,"t":"n"},"C3":{"v":10700,"w":" 10,700.00 ","f":null,"t":"n"},"D3":{"v":10800,"w":" 10,800.00 ","f":null,"t":"n"},"E3":{"v":11200,"w":" 11,200.00 ","f":null,"t":"n"},"F3":{"v":11200,"w":" 11,200.00 ","f":null,"t":"n"},"I3":{"v":"numerator","w":"numerator","f":null,"t":"s"},"K3":{"v":-20965.253872438803,"w":" (20,965.25)","f":"(B2-$J$2)*(B8-$J$8)","t":"n"},"L3":{"v":-8217.80190663982,"w":" (8,217.80)","f":"(C2-$J$2)*(C8-$J$8)","t":"n"},"M3":{"v":-5904.406053151643,"w":" (5,904.41)","f":"(D2-$J$2)*(D8-$J$8)","t":"n"},"N3":{"v":-22714.02847013012,"w":" (22,714.03)","f":"(E2-$J$2)*(E8-$J$8)","t":"n"},"O3":{"v":-57801.490302360384,"w":" (57,801.49)","f":"SUM(K3:N3)","t":"n"},"A4":{"v":"Доходы","w":"Доходы","f":null,"t":"s"},"B4":{"v":377850,"w":" 377,850.00 ","f":"B2*B3","t":"n"},"C4":{"v":460100,"w":" 460,100.00 ","f":"C2*C3","t":"n"},"D4":{"v":626400,"w":" 626,400.00 ","f":"D2*D3","t":"n"},"E4":{"v":828800,"w":" 828,800.00 ","f":"E2*E3","t":"n"},"F4":{"v":907200,"w":" 907,200.00 ","f":"F2*F3","t":"n"},"I4":{"v":"denominator","w":"denominator","f":null,"t":"s"},"K4":{"v":361,"w":"361","f":"(B2-$J$2)^2","t":"n"},"L4":{"v":81,"w":"81","f":"(C2-$J$2)^2","t":"n"},"M4":{"v":36,"w":"36","f":"(D2-$J$2)^2","t":"n"},"N4":{"v":484,"w":"484","f":"(E2-$J$2)^2","t":"n"},"O4":{"v":962,"w":" 962.00 ","f":"SUM(K4:N4)","t":"n"},"A5":{"v":"Расходы","w":"Расходы","f":null,"t":"s"},"B5":{"v":160000,"w":" 160,000.00 ","f":null,"t":"n"},"C5":{"v":200300,"w":" 200,300.00 ","f":null,"t":"n"},"D5":{"v":160137,"w":" 160,137.00 ","f":null,"t":"n"},"E5":{"v":200732,"w":" 200,732.00 ","f":null,"t":"n"},"F5":{"v":162210.10312814682,"w":" 162,210.10 ","f":"F2*F8","t":"n"},"I5":{"v":"slope","w":"slope","f":null,"t":"s"},"P5":{"v":-60.08470925401287,"w":" (60.08)","f":"O3/O4","t":"n"},"A6":{"v":"Прибыль","w":"Прибыль","f":null,"t":"s"},"B6":{"v":217850,"w":" 217,850.00 ","f":"B4-B5","t":"n"},"C6":{"v":259800,"w":" 259,800.00 ","f":"C4-C5","t":"n"},"D6":{"v":466263,"w":" 466,263.00 ","f":"D4-D5","t":"n"},"E6":{"v":628068,"w":" 628,068.00 ","f":"E4-E5","t":"n"},"F6":{"v":744989.8968718532,"w":" 744,989.90 ","f":"F4-F5","t":"n"},"I6":{"v":"intercept","w":"intercept","f":null,"t":"s"},"P6":{"v":6869.455315354633,"w":" 6,869.46 ","f":"J8-P5*J2","t":"n"},"A8":{"v":"Расходы / единица","w":"Расходы / единица","f":null,"t":"s"},"B8":{"v":4848.484848484848,"w":" 4,848.48 ","f":"B5/B2","t":"n"},"C8":{"v":4658.139534883721,"w":" 4,658.14 ","f":"C5/C2","t":"n"},"D8":{"v":2760.9827586206898,"w":" 2,760.98 ","f":"D5/D2","t":"n"},"E8":{"v":2712.5945945945946,"w":" 2,712.59 ","f":"E5/E2","t":"n"},"F8":{"v":2002.5938657795905,"w":" 2,002.59 ","f":"P6+(P5*F2)","t":"n"},"J8":{"v":3745.0504341459637,"w":" 3,745.05 ","f":"AVERAGE(B8:E8)","t":"n"}}}};
+    
+    let activeSheetName = Object.keys(workbookData)[0];
+    let selectedCellRef = null;
+
+    const tableEl = document.getElementById('excel-table');
+    const tabBarEl = document.getElementById('tab-bar');
+    const cellAddressEl = document.getElementById('cell-address');
+    const formulaInputEl = document.getElementById('formula-input');
+
+    // Utility: Convert column index to letters (e.g. 0 -> A, 27 -> AB)
+    function getColLetter(colIndex) {
+      let temp = '';
+      let letter = '';
+      while (colIndex >= 0) {
+        temp = colIndex % 26;
+        letter = String.fromCharCode(65 + temp) + letter;
+        colIndex = Math.floor(colIndex / 26) - 1;
+      }
+      return letter;
+    }
+
+    // Build the Tab Bar
+    function buildTabBar() {
+      tabBarEl.innerHTML = '';
+      Object.keys(workbookData).forEach(sheetName => {
+        const tab = document.createElement('div');
+        tab.className = 'sheet-tab' + (sheetName === activeSheetName ? ' active' : '');
+        tab.textContent = sheetName;
+        tab.addEventListener('click', () => {
+          activeSheetName = sheetName;
+          buildTabBar();
+          renderActiveSheet();
+        });
+        tabBarEl.appendChild(tab);
+      });
+    }
+
+    // Render the grid table
+    function renderActiveSheet() {
+      const sheet = workbookData[activeSheetName];
+      const cells = sheet.cells;
+      const range = sheet.range;
+
+      const minRow = 0;
+      const maxRow = Math.max(15, range.e.r); // Render at least 16 rows
+      const minCol = 0;
+      const maxCol = Math.max(7, range.e.c); // Render at least 8 columns
+
+      let html = '';
+
+      // Column widths (can adjust dynamically if needed, standard width 110px)
+      html += '<colgroup>';
+      html += '<col style="width: 44px;">'; // corner header
+      for (let c = minCol; c <= maxCol; c++) {
+        html += '<col style="width: 120px;">';
+      }
+      html += '</colgroup>';
+
+      // Table Header: Column letters
+      html += '<thead><tr>';
+      html += '<th class="corner-header"></th>';
+      for (let c = minCol; c <= maxCol; c++) {
+        const colLetter = getColLetter(c);
+        html += `<th class="col-header" id="col-${colLetter}">${colLetter}</th>`;
+      }
+      html += '</tr></thead>';
+
+      // Table Body: Rows
+      html += '<tbody>';
+      for (let r = minRow; r <= maxRow; r++) {
+        const rowNumber = r + 1;
+        html += '<tr>';
+        html += `<th class="row-header" id="row-${rowNumber}">${rowNumber}</th>`;
+        
+        for (let c = minCol; c <= maxCol; c++) {
+          const colLetter = getColLetter(c);
+          const cellRef = `${colLetter}${rowNumber}`;
+          const cell = cells[cellRef];
+          
+          let valStr = '';
+          let cellClass = 'cell';
+          
+          if (cell) {
+            valStr = cell.w || (cell.v !== null && cell.v !== undefined ? cell.v : '');
+            cellClass += cell.f ? ' has-formula' : '';
+          }
+
+          html += `<td class="${cellClass}" data-ref="${cellRef}">${escapeHtml(valStr.toString())}</td>`;
+        }
+        html += '</tr>';
+      }
+      html += '</tbody>';
+
+      tableEl.innerHTML = html;
+      selectedCellRef = null;
+      updateFormulaBar(null);
+
+      // Add click listeners to cells
+      tableEl.querySelectorAll('td.cell').forEach(td => {
+        td.addEventListener('mousedown', (e) => {
+          selectCell(e.target);
+        });
+      });
+    }
+
+    function selectCell(cellEl) {
+      // Remove previous selected class
+      tableEl.querySelectorAll('td.cell.selected').forEach(td => td.classList.remove('selected'));
+      tableEl.querySelectorAll('th.active-header').forEach(th => th.classList.remove('active-header'));
+
+      cellEl.classList.add('selected');
+      selectedCellRef = cellEl.getAttribute('data-ref');
+
+      // Highlight corresponding row and col headers
+      const parts = selectedCellRef.match(/^([A-Z]+)([0-9]+)$/);
+      if (parts) {
+        const colLetter = parts[1];
+        const rowNumber = parts[2];
+        const colHeader = document.getElementById(`col-${colLetter}`);
+        const rowHeader = document.getElementById(`row-${rowNumber}`);
+        if (colHeader) colHeader.classList.add('active-header');
+        if (rowHeader) rowHeader.classList.add('active-header');
+      }
+
+      updateFormulaBar(selectedCellRef);
+    }
+
+    function updateFormulaBar(ref) {
+      if (!ref) {
+        cellAddressEl.textContent = 'A1';
+        formulaInputEl.value = '';
+        return;
+      }
+
+      cellAddressEl.textContent = ref;
+      const sheet = workbookData[activeSheetName];
+      const cell = sheet.cells[ref];
+
+      if (cell) {
+        if (cell.f) {
+          formulaInputEl.value = '=' + cell.f;
+        } else {
+          formulaInputEl.value = cell.v !== null && cell.v !== undefined ? cell.v : '';
+        }
+      } else {
+        formulaInputEl.value = '';
+      }
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Security constraints to disable copy/paste/inspection
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (
+        (e.ctrlKey && (e.key === 'c' || e.key === 'C' || e.key === 'x' || e.key === 'X' || e.key === 's' || e.key === 'S' || e.key === 'u' || e.key === 'U')) ||
+        e.key === 'F12'
+      ) {
+        e.preventDefault();
+        alert("Copying, saving, or inspecting code is disabled on this preview page.");
+      }
+    });
+
+    // Initialize page
+    buildTabBar();
+    renderActiveSheet();
+  </script>
+</body>
+</html>
