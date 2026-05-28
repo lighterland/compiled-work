@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Упражнение 15 — Excel Web Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --header-bg: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --excel-header-bg: #f8fafc;
+      --excel-header-text: #64748b;
+      --excel-grid-line: #e2e8f0;
+      --excel-cell-text: #1e293b;
+      --excel-cell-bg: #ffffff;
+      
+      --active-cell-border: #3b82f6;
+      --active-header-bg: #eff6ff;
+      --active-header-text: #1d4ed8;
+      
+      --primary: #6366f1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Top Navigation bar */
+    .top-nav {
+      background-color: var(--header-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .back-btn {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .back-btn:hover {
+      color: var(--text-main);
+    }
+
+    .title-area {
+      text-align: center;
+    }
+
+    .title-area h1 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 0.15rem;
+    }
+
+    .badge-lock {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* Description bar */
+    .description-bar {
+      background: rgba(30, 41, 59, 0.5);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.6rem 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Formula Bar */
+    .formula-bar {
+      background-color: #ffffff;
+      border-bottom: 1px solid #cbd5e1;
+      padding: 0.35rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .cell-address {
+      background-color: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 0.25rem 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #334155;
+      min-width: 60px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .formula-fx {
+      color: #94a3b8;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: bold;
+      font-style: italic;
+      font-size: 0.9rem;
+      user-select: none;
+    }
+
+    .formula-input {
+      flex: 1;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 0.25rem 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #0f172a;
+      outline: none;
+    }
+
+    /* Spreadsheet Container */
+    .sheet-viewport {
+      flex: 1;
+      overflow: auto;
+      background-color: #f1f5f9;
+      position: relative;
+    }
+
+    /* Protection Watermark Overlay */
+    .watermark-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 10;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='150' viewBox='0 0 250 150'%3E%3Ctext fill='rgba(15, 23, 42, 0.04)' font-size='11' font-family='sans-serif' x='20' y='50' transform='rotate(-20 20 50)'%3EPREVIEW ONLY - FORMULAS VISIBLE%3C/text%3E%3C/svg%3E");
+    }
+
+    /* Excel Table Style */
+    table.excel-table {
+      border-collapse: collapse;
+      background-color: var(--excel-cell-bg);
+      color: var(--excel-cell-text);
+      font-size: 0.825rem;
+      table-layout: fixed;
+    }
+
+    table.excel-table th, table.excel-table td {
+      border: 1px solid var(--excel-grid-line);
+      padding: 4px 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Header Row and Col cells */
+    table.excel-table th {
+      background-color: var(--excel-header-bg);
+      color: var(--excel-header-text);
+      font-weight: 500;
+      text-align: center;
+      user-select: none;
+      position: sticky;
+      z-index: 2;
+    }
+
+    table.excel-table th.col-header {
+      top: 0;
+      height: 24px;
+    }
+
+    table.excel-table th.row-header {
+      left: 0;
+      width: 44px;
+      z-index: 3;
+    }
+
+    table.excel-table th.corner-header {
+      top: 0;
+      left: 0;
+      z-index: 4;
+      width: 44px;
+      height: 24px;
+    }
+
+    /* Selected cell states */
+    table.excel-table td.cell {
+      cursor: cell;
+      position: relative;
+    }
+
+    table.excel-table td.cell.selected {
+      outline: 2px solid var(--active-cell-border);
+      outline-offset: -2px;
+      background-color: #f0f7ff !important;
+    }
+
+    table.excel-table th.active-header {
+      background-color: var(--active-header-bg) !important;
+      color: var(--active-header-text) !important;
+      font-weight: 700;
+    }
+
+    /* Tab Bar at the bottom */
+    .tab-bar {
+      background-color: #f1f5f9;
+      border-top: 1px solid #cbd5e1;
+      padding: 0.35rem 0.75rem 0;
+      display: flex;
+      gap: 0.25rem;
+      flex-shrink: 0;
+      overflow-x: auto;
+    }
+
+    .sheet-tab {
+      background-color: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      border-bottom: none;
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #475569;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .sheet-tab:hover {
+      background-color: #cbd5e1;
+    }
+
+    .sheet-tab.active {
+      background-color: #ffffff;
+      color: #0f172a;
+      font-weight: 700;
+      border-bottom: 1px solid #ffffff;
+      margin-bottom: -1px;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation bar -->
+  <div class="top-nav">
+    <a href="index.html" class="back-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to Directory
+    </a>
+    <div class="title-area">
+      <h1>Упражнение 15</h1>
+    </div>
+    <span class="badge-lock">🔒 Download Locked until June 8, 2026</span>
+  </div>
+
+  <!-- Description bar -->
+  <div class="description-bar">
+    <span><strong>Description:</strong> Практикум по использованию функций поиска ВПР (VLOOKUP) и ГПР (HLOOKUP) для автоматического заполнения карточек клиентов.</span>
+    <span>Click any cell to inspect its Excel formula. Copying is disabled.</span>
+  </div>
+
+  <!-- Formula Bar -->
+  <div class="formula-bar">
+    <div id="cell-address" class="cell-address">A1</div>
+    <span class="formula-fx">fx</span>
+    <input id="formula-input" class="formula-input" type="text" readonly value="">
+  </div>
+
+  <!-- Sheet Viewport -->
+  <div class="sheet-viewport" id="sheet-viewport">
+    <div class="watermark-overlay"></div>
+    <table class="excel-table" id="excel-table">
+      <!-- Generated dynamically by JS -->
+    </table>
+  </div>
+
+  <!-- Sheet Tab Bar -->
+  <div class="tab-bar" id="tab-bar">
+    <!-- Generated dynamically by JS -->
+  </div>
+
+  <script>
+    // Embedded parsed spreadsheet data
+    const workbookData = {"ВПР,ГПР":{"ref":"A1:I132","range":{"s":{"c":0,"r":0},"e":{"c":8,"r":131}},"cells":{"A1":{"v":"По коду выезда с помощью функции ВПР подберите сведения о клиенте, регионе и формате визита. Заполняются только жёлтые ячейки.","w":"По коду выезда с помощью функции ВПР подберите сведения о клиенте, регионе и формате визита. Заполняются только жёлтые ячейки.","f":null,"t":"s"},"A4":{"v":"Код выезда","w":"Код выезда","f":null,"t":"s"},"B4":{"v":"Клиент","w":"Клиент","f":null,"t":"s"},"C4":{"v":"Регион","w":"Регион","f":null,"t":"s"},"D4":{"v":"Формат визита","w":"Формат визита","f":null,"t":"s"},"A5":{"v":"TR-106","w":"TR-106","f":null,"t":"s"},"B5":{"v":"Орбита","w":"Орбита","f":"VLOOKUP(A5,$A$14:$D$26,2,FALSE)","t":"s"},"C5":{"v":"Новосибирск","w":"Новосибирск","f":"VLOOKUP(A5,$A$14:$D$26,3,FALSE)","t":"s"},"D5":{"v":"Обучение на месте","w":"Обучение на месте","f":"VLOOKUP(A5,$A$14:$D$26,4,FALSE)","t":"s"},"A6":{"v":"TR-111","w":"TR-111","f":null,"t":"s"},"B6":{"v":"Сигнал","w":"Сигнал","f":"VLOOKUP(A6,$A$14:$D$26,2,FALSE)","t":"s"},"C6":{"v":"Омск","w":"Омск","f":"VLOOKUP(A6,$A$14:$D$26,3,FALSE)","t":"s"},"D6":{"v":"Обучение на месте","w":"Обучение на месте","f":"VLOOKUP(A6,$A$14:$D$26,4,FALSE)","t":"s"},"A7":{"v":"TR-104","w":"TR-104","f":null,"t":"s"},"B7":{"v":"Альфа Принт","w":"Альфа Принт","f":"VLOOKUP(A7,$A$14:$D$26,2,FALSE)","t":"s"},"C7":{"v":"Казань","w":"Казань","f":"VLOOKUP(A7,$A$14:$D$26,3,FALSE)","t":"s"},"D7":{"v":"Демонстрация","w":"Демонстрация","f":"VLOOKUP(A7,$A$14:$D$26,4,FALSE)","t":"s"},"A8":{"v":"TR-109","w":"TR-109","f":null,"t":"s"},"B8":{"v":"Каскад","w":"Каскад","f":"VLOOKUP(A8,$A$14:$D$26,2,FALSE)","t":"s"},"C8":{"v":"Тюмень","w":"Тюмень","f":"VLOOKUP(A8,$A$14:$D$26,3,FALSE)","t":"s"},"D8":{"v":"Диагностика","w":"Диагностика","f":"VLOOKUP(A8,$A$14:$D$26,4,FALSE)","t":"s"},"A9":{"v":"TR-102","w":"TR-102","f":null,"t":"s"},"B9":{"v":"Лига Плюс","w":"Лига Плюс","f":"VLOOKUP(A9,$A$14:$D$26,2,FALSE)","t":"s"},"C9":{"v":"Самара","w":"Самара","f":"VLOOKUP(A9,$A$14:$D$26,3,FALSE)","t":"s"},"D9":{"v":"Онлайн-бриф","w":"Онлайн-бриф","f":"VLOOKUP(A9,$A$14:$D$26,4,FALSE)","t":"s"},"A10":{"v":"TR-108","w":"TR-108","f":null,"t":"s"},"B10":{"v":"Технопарк 24","w":"Технопарк 24","f":"VLOOKUP(A10,$A$14:$D$26,2,FALSE)","t":"s"},"C10":{"v":"Воронеж","w":"Воронеж","f":"VLOOKUP(A10,$A$14:$D$26,3,FALSE)","t":"s"},"D10":{"v":"Очная встреча","w":"Очная встреча","f":"VLOOKUP(A10,$A$14:$D$26,4,FALSE)","t":"s"},"A13":{"v":"Реестр выездов","w":"Реестр выездов","f":null,"t":"s"},"A14":{"v":"Код выезда","w":"Код выезда","f":null,"t":"s"},"B14":{"v":"Клиент","w":"Клиент","f":null,"t":"s"},"C14":{"v":"Регион","w":"Регион","f":null,"t":"s"},"D14":{"v":"Формат визита","w":"Формат визита","f":null,"t":"s"},"A15":{"v":"TR-101","w":"TR-101","f":null,"t":"s"},"B15":{"v":"МедиаСфера","w":"МедиаСфера","f":null,"t":"s"},"C15":{"v":"Екатеринбург","w":"Екатеринбург","f":null,"t":"s"},"D15":{"v":"Очный аудит","w":"Очный аудит","f":null,"t":"s"},"A16":{"v":"TR-102","w":"TR-102","f":null,"t":"s"},"B16":{"v":"Лига Плюс","w":"Лига Плюс","f":null,"t":"s"},"C16":{"v":"Самара","w":"Самара","f":null,"t":"s"},"D16":{"v":"Онлайн-бриф","w":"Онлайн-бриф","f":null,"t":"s"},"A17":{"v":"TR-103","w":"TR-103","f":null,"t":"s"},"B17":{"v":"СеверСофт","w":"СеверСофт","f":null,"t":"s"},"C17":{"v":"Пермь","w":"Пермь","f":null,"t":"s"},"D17":{"v":"Очная встреча","w":"Очная встреча","f":null,"t":"s"},"A18":{"v":"TR-104","w":"TR-104","f":null,"t":"s"},"B18":{"v":"Альфа Принт","w":"Альфа Принт","f":null,"t":"s"},"C18":{"v":"Казань","w":"Казань","f":null,"t":"s"},"D18":{"v":"Демонстрация","w":"Демонстрация","f":null,"t":"s"},"A19":{"v":"TR-105","w":"TR-105","f":null,"t":"s"},"B19":{"v":"Гелиос","w":"Гелиос","f":null,"t":"s"},"C19":{"v":"Сочи","w":"Сочи","f":null,"t":"s"},"D19":{"v":"Онлайн-бриф","w":"Онлайн-бриф","f":null,"t":"s"},"A20":{"v":"TR-106","w":"TR-106","f":null,"t":"s"},"B20":{"v":"Орбита","w":"Орбита","f":null,"t":"s"},"C20":{"v":"Новосибирск","w":"Новосибирск","f":null,"t":"s"},"D20":{"v":"Обучение на месте","w":"Обучение на месте","f":null,"t":"s"},"A21":{"v":"TR-107","w":"TR-107","f":null,"t":"s"},"B21":{"v":"Вектор-М","w":"Вектор-М","f":null,"t":"s"},"C21":{"v":"Уфа","w":"Уфа","f":null,"t":"s"},"D21":{"v":"Диагностика","w":"Диагностика","f":null,"t":"s"},"A22":{"v":"TR-108","w":"TR-108","f":null,"t":"s"},"B22":{"v":"Технопарк 24","w":"Технопарк 24","f":null,"t":"s"},"C22":{"v":"Воронеж","w":"Воронеж","f":null,"t":"s"},"D22":{"v":"Очная встреча","w":"Очная встреча","f":null,"t":"s"},"A23":{"v":"TR-109","w":"TR-109","f":null,"t":"s"},"B23":{"v":"Каскад","w":"Каскад","f":null,"t":"s"},"C23":{"v":"Тюмень","w":"Тюмень","f":null,"t":"s"},"D23":{"v":"Диагностика","w":"Диагностика","f":null,"t":"s"},"A24":{"v":"TR-110","w":"TR-110","f":null,"t":"s"},"B24":{"v":"Неон","w":"Неон","f":null,"t":"s"},"C24":{"v":"Ижевск","w":"Ижевск","f":null,"t":"s"},"D24":{"v":"Демонстрация","w":"Демонстрация","f":null,"t":"s"},"A25":{"v":"TR-111","w":"TR-111","f":null,"t":"s"},"B25":{"v":"Сигнал","w":"Сигнал","f":null,"t":"s"},"C25":{"v":"Омск","w":"Омск","f":null,"t":"s"},"D25":{"v":"Обучение на месте","w":"Обучение на месте","f":null,"t":"s"},"A26":{"v":"TR-112","w":"TR-112","f":null,"t":"s"},"B26":{"v":"Атлас Лаб","w":"Атлас Лаб","f":null,"t":"s"},"C26":{"v":"Тула","w":"Тула","f":null,"t":"s"},"D26":{"v":"Онлайн-бриф","w":"Онлайн-бриф","f":null,"t":"s"},"A29":{"v":"По коду станции с помощью функции ВПР найдите показатель средней влажности. Таблица показателей расположена горизонтально.","w":"По коду станции с помощью функции ВПР найдите показатель средней влажности. Таблица показателей расположена горизонтально.","f":null,"t":"s"},"A32":{"v":"Код станции","w":"Код станции","f":null,"t":"s"},"B32":{"v":"Средняя влажность, %","w":"Средняя влажность, %","f":null,"t":"s"},"C32":{"v":"Средняя влажность, % (ГПР)","w":"Средняя влажность, % (ГПР)","f":null,"t":"s"},"A33":{"v":"CL-04","w":"CL-04","f":null,"t":"s"},"B33":{"v":84,"w":"84","f":"VLOOKUP(A33,TRANSPOSE($A$41:$I$44),3,FALSE)","t":"n"},"C33":{"v":84,"w":"84","f":"HLOOKUP(A33,$A$41:$I$44,3,FALSE)","t":"n"},"A34":{"v":"CL-01","w":"CL-01","f":null,"t":"s"},"B34":{"v":78,"w":"78","f":"VLOOKUP(A34,TRANSPOSE($A$41:$I$44),3,FALSE)","t":"n"},"C34":{"v":78,"w":"78","f":"HLOOKUP(A34,$A$41:$I$44,3,FALSE)","t":"n"},"A35":{"v":"CL-07","w":"CL-07","f":null,"t":"s"},"B35":{"v":73,"w":"73","f":"VLOOKUP(A35,TRANSPOSE($A$41:$I$44),3,FALSE)","t":"n"},"C35":{"v":73,"w":"73","f":"HLOOKUP(A35,$A$41:$I$44,3,FALSE)","t":"n"},"A36":{"v":"CL-03","w":"CL-03","f":null,"t":"s"},"B36":{"v":71,"w":"71","f":"VLOOKUP(A36,TRANSPOSE($A$41:$I$44),3,FALSE)","t":"n"},"C36":{"v":71,"w":"71","f":"HLOOKUP(A36,$A$41:$I$44,3,FALSE)","t":"n"},"A37":{"v":"CL-08","w":"CL-08","f":null,"t":"s"},"B37":{"v":69,"w":"69","f":"VLOOKUP(A37,TRANSPOSE($A$41:$I$44),3,FALSE)","t":"n"},"C37":{"v":69,"w":"69","f":"HLOOKUP(A37,$A$41:$I$44,3,FALSE)","t":"n"},"A38":{"v":"CL-02","w":"CL-02","f":null,"t":"s"},"B38":{"v":65,"w":"65","f":"VLOOKUP(A38,TRANSPOSE($A$41:$I$44),3,FALSE)","t":"n"},"C38":{"v":65,"w":"65","f":"HLOOKUP(A38,$A$41:$I$44,3,FALSE)","t":"n"},"B40":{"v":"Паспорт станций","w":"Паспорт станций","f":null,"t":"s"},"A41":{"v":"Код станции","w":"Код станции","f":null,"t":"s"},"B41":{"v":"CL-01","w":"CL-01","f":null,"t":"s"},"C41":{"v":"CL-02","w":"CL-02","f":null,"t":"s"},"D41":{"v":"CL-03","w":"CL-03","f":null,"t":"s"},"E41":{"v":"CL-04","w":"CL-04","f":null,"t":"s"},"F41":{"v":"CL-05","w":"CL-05","f":null,"t":"s"},"G41":{"v":"CL-06","w":"CL-06","f":null,"t":"s"},"H41":{"v":"CL-07","w":"CL-07","f":null,"t":"s"},"I41":{"v":"CL-08","w":"CL-08","f":null,"t":"s"},"A42":{"v":"Площадка","w":"Площадка","f":null,"t":"s"},"B42":{"v":"Арктика","w":"Арктика","f":null,"t":"s"},"C42":{"v":"Тундра","w":"Тундра","f":null,"t":"s"},"D42":{"v":"Берег","w":"Берег","f":null,"t":"s"},"E42":{"v":"Плато","w":"Плато","f":null,"t":"s"},"F42":{"v":"Долина","w":"Долина","f":null,"t":"s"},"G42":{"v":"Степь","w":"Степь","f":null,"t":"s"},"H42":{"v":"Порт","w":"Порт","f":null,"t":"s"},"I42":{"v":"Лес","w":"Лес","f":null,"t":"s"},"A43":{"v":"Средняя влажность, %","w":"Средняя влажность, %","f":null,"t":"s"},"B43":{"v":78,"w":"78","f":null,"t":"n"},"C43":{"v":65,"w":"65","f":null,"t":"n"},"D43":{"v":71,"w":"71","f":null,"t":"n"},"E43":{"v":84,"w":"84","f":null,"t":"n"},"F43":{"v":60,"w":"60","f":null,"t":"n"},"G43":{"v":67,"w":"67","f":null,"t":"n"},"H43":{"v":73,"w":"73","f":null,"t":"n"},"I43":{"v":69,"w":"69","f":null,"t":"n"},"A44":{"v":"Ветер, м/с","w":"Ветер, м/с","f":null,"t":"s"},"B44":{"v":5.1,"w":"5.1","f":null,"t":"n"},"C44":{"v":3.4,"w":"3.4","f":null,"t":"n"},"D44":{"v":4.2,"w":"4.2","f":null,"t":"n"},"E44":{"v":6,"w":"6.0","f":null,"t":"n"},"F44":{"v":2.9,"w":"2.9","f":null,"t":"n"},"G44":{"v":3.8,"w":"3.8","f":null,"t":"n"},"H44":{"v":4.7,"w":"4.7","f":null,"t":"n"},"I44":{"v":3.1,"w":"3.1","f":null,"t":"n"},"A47":{"v":"По наименованию позиции определите категорию и суточный тариф. Используйте справочник справа.","w":"По наименованию позиции определите категорию и суточный тариф. Используйте справочник справа.","f":null,"t":"s"},"A50":{"v":"Позиция","w":"Позиция","f":null,"t":"s"},"B50":{"v":"Категория","w":"Категория","f":null,"t":"s"},"C50":{"v":"Тариф за сутки, ₽","w":"Тариф за сутки, ₽","f":null,"t":"s"},"E50":{"v":"Каталог проката","w":"Каталог проката","f":null,"t":"s"},"A51":{"v":"Электросамокат","w":"Электросамокат","f":null,"t":"s"},"B51":{"v":"Городской транспорт","w":"Городской транспорт","f":"VLOOKUP(A51,$E$51:$H$59,2,FALSE)","t":"s"},"C51":{"v":1500,"w":"1500","f":"VLOOKUP(A51,$E$51:$H$59,3,FALSE)","t":"n"},"E51":{"v":"Позиция","w":"Позиция","f":null,"t":"s"},"F51":{"v":"Категория","w":"Категория","f":null,"t":"s"},"G51":{"v":"Тариф за сутки, ₽","w":"Тариф за сутки, ₽","f":null,"t":"s"},"H51":{"v":"Залог, ₽","w":"Залог, ₽","f":null,"t":"s"},"A52":{"v":"Палатка 2-местная","w":"Палатка 2-местная","f":null,"t":"s"},"B52":{"v":"Туризм","w":"Туризм","f":"VLOOKUP(A52,$E$51:$H$59,2,FALSE)","t":"s"},"C52":{"v":900,"w":"900","f":"VLOOKUP(A52,$E$51:$H$59,3,FALSE)","t":"n"},"E52":{"v":"Рация","w":"Рация","f":null,"t":"s"},"F52":{"v":"Электроника","w":"Электроника","f":null,"t":"s"},"G52":{"v":450,"w":"450","f":null,"t":"n"},"H52":{"v":2000,"w":"2000","f":null,"t":"n"},"A53":{"v":"Рация","w":"Рация","f":null,"t":"s"},"B53":{"v":"Электроника","w":"Электроника","f":"VLOOKUP(A53,$E$51:$H$59,2,FALSE)","t":"s"},"C53":{"v":450,"w":"450","f":"VLOOKUP(A53,$E$51:$H$59,3,FALSE)","t":"n"},"E53":{"v":"Проектор","w":"Проектор","f":null,"t":"s"},"F53":{"v":"Техника","w":"Техника","f":null,"t":"s"},"G53":{"v":1200,"w":"1200","f":null,"t":"n"},"H53":{"v":5000,"w":"5000","f":null,"t":"n"},"A54":{"v":"Спальный мешок","w":"Спальный мешок","f":null,"t":"s"},"B54":{"v":"Туризм","w":"Туризм","f":"VLOOKUP(A54,$E$51:$H$59,2,FALSE)","t":"s"},"C54":{"v":380,"w":"380","f":"VLOOKUP(A54,$E$51:$H$59,3,FALSE)","t":"n"},"E54":{"v":"Спальный мешок","w":"Спальный мешок","f":null,"t":"s"},"F54":{"v":"Туризм","w":"Туризм","f":null,"t":"s"},"G54":{"v":380,"w":"380","f":null,"t":"n"},"H54":{"v":1500,"w":"1500","f":null,"t":"n"},"A55":{"v":"Power bank","w":"Power bank","f":null,"t":"s"},"B55":{"v":"Электроника","w":"Электроника","f":"VLOOKUP(A55,$E$51:$H$59,2,FALSE)","t":"s"},"C55":{"v":250,"w":"250","f":"VLOOKUP(A55,$E$51:$H$59,3,FALSE)","t":"n"},"E55":{"v":"Палатка 2-местная","w":"Палатка 2-местная","f":null,"t":"s"},"F55":{"v":"Туризм","w":"Туризм","f":null,"t":"s"},"G55":{"v":900,"w":"900","f":null,"t":"n"},"H55":{"v":3500,"w":"3500","f":null,"t":"n"},"A56":{"v":"Проектор","w":"Проектор","f":null,"t":"s"},"B56":{"v":"Техника","w":"Техника","f":"VLOOKUP(A56,$E$51:$H$59,2,FALSE)","t":"s"},"C56":{"v":1200,"w":"1200","f":"VLOOKUP(A56,$E$51:$H$59,3,FALSE)","t":"n"},"E56":{"v":"Набор микрофонов","w":"Набор микрофонов","f":null,"t":"s"},"F56":{"v":"Техника","w":"Техника","f":null,"t":"s"},"G56":{"v":1600,"w":"1600","f":null,"t":"n"},"H56":{"v":7000,"w":"7000","f":null,"t":"n"},"E57":{"v":"Электросамокат","w":"Электросамокат","f":null,"t":"s"},"F57":{"v":"Городской транспорт","w":"Городской транспорт","f":null,"t":"s"},"G57":{"v":1500,"w":"1500","f":null,"t":"n"},"H57":{"v":6000,"w":"6000","f":null,"t":"n"},"E58":{"v":"Power bank","w":"Power bank","f":null,"t":"s"},"F58":{"v":"Электроника","w":"Электроника","f":null,"t":"s"},"G58":{"v":250,"w":"250","f":null,"t":"n"},"H58":{"v":1000,"w":"1000","f":null,"t":"n"},"E59":{"v":"Портативная колонка","w":"Портативная колонка","f":null,"t":"s"},"F59":{"v":"Электроника","w":"Электроника","f":null,"t":"s"},"G59":{"v":520,"w":"520","f":null,"t":"n"},"H59":{"v":1800,"w":"1800","f":null,"t":"n"},"A63":{"v":"С помощью функции Индекс + ПОИСКПОЗ подберите по дате тему эфира и время начала. В журнале используются только указанные даты.","w":"С помощью функции Индекс + ПОИСКПОЗ подберите по дате тему эфира и время начала. В журнале используются только указанные даты.","f":null,"t":"s"},"A66":{"v":"Дата","w":"Дата","f":null,"t":"s"},"B66":{"v":"Тема эфира","w":"Тема эфира","f":null,"t":"s"},"C66":{"v":"Время","w":"Время","f":null,"t":"s"},"E66":{"v":"Расписание студии","w":"Расписание студии","f":null,"t":"s"},"A67":{"v":46085,"w":"04.03.2026","f":null,"t":"n"},"B67":{"v":"Тренды мобильной рекламы","w":"Тренды мобильной рекламы","f":"INDEX($E$67:$E$77,MATCH(A67,$F$67:$F$77))","t":"s"},"C67":{"v":0.4791666666666667,"w":"11:30","f":"INDEX($G$67:$G$77,MATCH(A67,$F$67:$F$77))","t":"n"},"E67":{"v":"Тема эфира","w":"Тема эфира","f":null,"t":"s"},"F67":{"v":"Дата","w":"Дата","f":null,"t":"s"},"G67":{"v":"Время","w":"Время","f":null,"t":"s"},"A68":{"v":46089,"w":"08.03.2026","f":null,"t":"n"},"B68":{"v":"Музыкальные релизы недели","w":"Музыкальные релизы недели","f":"INDEX($E$67:$E$77,MATCH(A68,$F$67:$F$77))","t":"s"},"C68":{"v":0.6458333333333334,"w":"15:30","f":"INDEX($G$67:$G$77,MATCH(A68,$F$67:$F$77))","t":"n"},"E68":{"v":"Итоги книжной ярмарки","w":"Итоги книжной ярмарки","f":null,"t":"s"},"F68":{"v":46082,"w":"01.03.2026","f":null,"t":"n"},"G68":{"v":0.4375,"w":"10:30","f":null,"t":"n"},"A69":{"v":46083,"w":"02.03.2026","f":null,"t":"n"},"B69":{"v":"Разбор фотопроектов","w":"Разбор фотопроектов","f":"INDEX($E$67:$E$77,MATCH(A69,$F$67:$F$77))","t":"s"},"C69":{"v":0.5416666666666666,"w":"13:00","f":"INDEX($G$67:$G$77,MATCH(A69,$F$67:$F$77))","t":"n"},"E69":{"v":"Разбор фотопроектов","w":"Разбор фотопроектов","f":null,"t":"s"},"F69":{"v":46083,"w":"02.03.2026","f":null,"t":"n"},"G69":{"v":0.5416666666666666,"w":"13:00","f":null,"t":"n"},"A70":{"v":46091,"w":"10.03.2026","f":null,"t":"n"},"B70":{"v":"Как собрать портфолио","w":"Как собрать портфолио","f":"INDEX($E$67:$E$77,MATCH(A70,$F$67:$F$77))","t":"s"},"C70":{"v":0.6041666666666666,"w":"14:30","f":"INDEX($G$67:$G$77,MATCH(A70,$F$67:$F$77))","t":"n"},"E70":{"v":"Карьерный трек дизайнера","w":"Карьерный трек дизайнера","f":null,"t":"s"},"F70":{"v":46084,"w":"03.03.2026","f":null,"t":"n"},"G70":{"v":0.75,"w":"18:00","f":null,"t":"n"},"A71":{"v":46087,"w":"06.03.2026","f":null,"t":"n"},"B71":{"v":"Нейросети в образовании","w":"Нейросети в образовании","f":"INDEX($E$67:$E$77,MATCH(A71,$F$67:$F$77))","t":"s"},"C71":{"v":0.7916666666666666,"w":"19:00","f":"INDEX($G$67:$G$77,MATCH(A71,$F$67:$F$77))","t":"n"},"E71":{"v":"Тренды мобильной рекламы","w":"Тренды мобильной рекламы","f":null,"t":"s"},"F71":{"v":46085,"w":"04.03.2026","f":null,"t":"n"},"G71":{"v":0.4791666666666667,"w":"11:30","f":null,"t":"n"},"A72":{"v":46082,"w":"01.03.2026","f":null,"t":"n"},"B72":{"v":"Итоги книжной ярмарки","w":"Итоги книжной ярмарки","f":"INDEX($E$67:$E$77,MATCH(A72,$F$67:$F$77))","t":"s"},"C72":{"v":0.4375,"w":"10:30","f":"INDEX($G$67:$G$77,MATCH(A72,$F$67:$F$77))","t":"n"},"E72":{"v":"Городские фестивали весны","w":"Городские фестивали весны","f":null,"t":"s"},"F72":{"v":46086,"w":"05.03.2026","f":null,"t":"n"},"G72":{"v":0.6666666666666666,"w":"16:00","f":null,"t":"n"},"E73":{"v":"Нейросети в образовании","w":"Нейросети в образовании","f":null,"t":"s"},"F73":{"v":46087,"w":"06.03.2026","f":null,"t":"n"},"G73":{"v":0.7916666666666666,"w":"19:00","f":null,"t":"n"},"E74":{"v":"Финансовая грамотность","w":"Финансовая грамотность","f":null,"t":"s"},"F74":{"v":46088,"w":"07.03.2026","f":null,"t":"n"},"G74":{"v":0.5,"w":"12:00","f":null,"t":"n"},"E75":{"v":"Музыкальные релизы недели","w":"Музыкальные релизы недели","f":null,"t":"s"},"F75":{"v":46089,"w":"08.03.2026","f":null,"t":"n"},"G75":{"v":0.6458333333333334,"w":"15:30","f":null,"t":"n"},"E76":{"v":"Стажировки для студентов","w":"Стажировки для студентов","f":null,"t":"s"},"F76":{"v":46090,"w":"09.03.2026","f":null,"t":"n"},"G76":{"v":0.7083333333333334,"w":"17:00","f":null,"t":"n"},"E77":{"v":"Как собрать портфолио","w":"Как собрать портфолио","f":null,"t":"s"},"F77":{"v":46091,"w":"10.03.2026","f":null,"t":"n"},"G77":{"v":0.6041666666666666,"w":"14:30","f":null,"t":"n"},"A81":{"v":"С помощью функции ВПР по артикулу подберите название товара, категорию и розничную цену. Используйте выпадающий список по артикулу товара. ","w":"С помощью функции ВПР по артикулу подберите название товара, категорию и розничную цену. Используйте выпадающий список по артикулу товара. ","f":null,"t":"s"},"A84":{"v":"Артикул","w":"Артикул","f":null,"t":"s"},"B84":{"v":"Название товара","w":"Название товара","f":null,"t":"s"},"C84":{"v":"Категория","w":"Категория","f":null,"t":"s"},"D84":{"v":"Цена, ₽","w":"Цена, ₽","f":null,"t":"s"},"A85":{"v":"AR-206","w":"AR-206","f":null,"t":"s"},"B85":{"v":"Кабель HDMI","w":"Кабель HDMI","f":"VLOOKUP(A85,A89:D99,2,FALSE)","t":"s"},"C85":{"v":"Аксессуары","w":"Аксессуары","f":"VLOOKUP(A85,A89:D99,3,FALSE)","t":"s"},"D85":{"v":550,"w":" 550 ₽","f":"VLOOKUP(A85,A89:D99,4,FALSE)","t":"n"},"A88":{"v":"Справочник товаров","w":"Справочник товаров","f":null,"t":"s"},"A89":{"v":"Артикул","w":"Артикул","f":null,"t":"s"},"B89":{"v":"Название товара","w":"Название товара","f":null,"t":"s"},"C89":{"v":"Категория","w":"Категория","f":null,"t":"s"},"D89":{"v":"Цена, ₽","w":"Цена, ₽","f":null,"t":"s"},"A90":{"v":"AR-201","w":"AR-201","f":null,"t":"s"},"B90":{"v":"Клавиатура компактная","w":"Клавиатура компактная","f":null,"t":"s"},"C90":{"v":"Периферия","w":"Периферия","f":null,"t":"s"},"D90":{"v":1450,"w":"1 450 ₽","f":null,"t":"n"},"A91":{"v":"AR-202","w":"AR-202","f":null,"t":"s"},"B91":{"v":"Мышь беспроводная","w":"Мышь беспроводная","f":null,"t":"s"},"C91":{"v":"Периферия","w":"Периферия","f":null,"t":"s"},"D91":{"v":890,"w":" 890 ₽","f":null,"t":"n"},"A92":{"v":"AR-203","w":"AR-203","f":null,"t":"s"},"B92":{"v":"Монитор 24 дюйма","w":"Монитор 24 дюйма","f":null,"t":"s"},"C92":{"v":"Оборудование","w":"Оборудование","f":null,"t":"s"},"D92":{"v":13900,"w":"13 900 ₽","f":null,"t":"n"},"A93":{"v":"AR-204","w":"AR-204","f":null,"t":"s"},"B93":{"v":"Веб-камера HD","w":"Веб-камера HD","f":null,"t":"s"},"C93":{"v":"Периферия","w":"Периферия","f":null,"t":"s"},"D93":{"v":3200,"w":"3 200 ₽","f":null,"t":"n"},"A94":{"v":"AR-205","w":"AR-205","f":null,"t":"s"},"B94":{"v":"Док-станция USB-C","w":"Док-станция USB-C","f":null,"t":"s"},"C94":{"v":"Аксессуары","w":"Аксессуары","f":null,"t":"s"},"D94":{"v":6700,"w":"6 700 ₽","f":null,"t":"n"},"A95":{"v":"AR-206","w":"AR-206","f":null,"t":"s"},"B95":{"v":"Кабель HDMI","w":"Кабель HDMI","f":null,"t":"s"},"C95":{"v":"Аксессуары","w":"Аксессуары","f":null,"t":"s"},"D95":{"v":550,"w":" 550 ₽","f":null,"t":"n"},"A96":{"v":"AR-207","w":"AR-207","f":null,"t":"s"},"B96":{"v":"Гарнитура офисная","w":"Гарнитура офисная","f":null,"t":"s"},"C96":{"v":"Периферия","w":"Периферия","f":null,"t":"s"},"D96":{"v":2100,"w":"2 100 ₽","f":null,"t":"n"},"A97":{"v":"AR-208","w":"AR-208","f":null,"t":"s"},"B97":{"v":"Ноутбук учебный","w":"Ноутбук учебный","f":null,"t":"s"},"C97":{"v":"Оборудование","w":"Оборудование","f":null,"t":"s"},"D97":{"v":54900,"w":"54 900 ₽","f":null,"t":"n"},"A98":{"v":"AR-209","w":"AR-209","f":null,"t":"s"},"B98":{"v":"Сетевой фильтр","w":"Сетевой фильтр","f":null,"t":"s"},"C98":{"v":"Аксессуары","w":"Аксессуары","f":null,"t":"s"},"D98":{"v":760,"w":" 760 ₽","f":null,"t":"n"},"A99":{"v":"AR-210","w":"AR-210","f":null,"t":"s"},"B99":{"v":"Внешний SSD 1 ТБ","w":"Внешний SSD 1 ТБ","f":null,"t":"s"},"C99":{"v":"Накопители","w":"Накопители","f":null,"t":"s"},"D99":{"v":8200,"w":"8 200 ₽","f":null,"t":"n"},"A102":{"v":"По коду склада с помощью функции ГПР найдите город и срок поставки. Используйте выпадающий список по коду склада. ","w":"По коду склада с помощью функции ГПР найдите город и срок поставки. Используйте выпадающий список по коду склада. ","f":null,"t":"s"},"A105":{"v":"Код склада","w":"Код склада","f":null,"t":"s"},"B105":{"v":"Город","w":"Город","f":null,"t":"s"},"C105":{"v":"Срок поставки, дней","w":"Срок поставки, дней","f":null,"t":"s"},"A106":{"v":"WH-03","w":"WH-03","f":null,"t":"s"},"B106":{"v":"Екатеринбург","w":"Екатеринбург","f":"HLOOKUP(A106,A110:I113,2,FALSE)","t":"s"},"C106":{"v":5,"w":"5","f":"HLOOKUP(A106,A110:I113,3,FALSE)","t":"n"},"A109":{"v":"Паспорт складов","w":"Паспорт складов","f":null,"t":"s"},"A110":{"v":"Код склада","w":"Код склада","f":null,"t":"s"},"B110":{"v":"WH-01","w":"WH-01","f":null,"t":"s"},"C110":{"v":"WH-02","w":"WH-02","f":null,"t":"s"},"D110":{"v":"WH-03","w":"WH-03","f":null,"t":"s"},"E110":{"v":"WH-04","w":"WH-04","f":null,"t":"s"},"F110":{"v":"WH-05","w":"WH-05","f":null,"t":"s"},"G110":{"v":"WH-06","w":"WH-06","f":null,"t":"s"},"H110":{"v":"WH-07","w":"WH-07","f":null,"t":"s"},"I110":{"v":"WH-08","w":"WH-08","f":null,"t":"s"},"A111":{"v":"Город","w":"Город","f":null,"t":"s"},"B111":{"v":"Москва","w":"Москва","f":null,"t":"s"},"C111":{"v":"Казань","w":"Казань","f":null,"t":"s"},"D111":{"v":"Екатеринбург","w":"Екатеринбург","f":null,"t":"s"},"E111":{"v":"Новосибирск","w":"Новосибирск","f":null,"t":"s"},"F111":{"v":"Самара","w":"Самара","f":null,"t":"s"},"G111":{"v":"Ростов-на-Дону","w":"Ростов-на-Дону","f":null,"t":"s"},"H111":{"v":"Пермь","w":"Пермь","f":null,"t":"s"},"I111":{"v":"Владивосток","w":"Владивосток","f":null,"t":"s"},"A112":{"v":"Срок поставки, дней","w":"Срок поставки, дней","f":null,"t":"s"},"B112":{"v":2,"w":"2","f":null,"t":"n"},"C112":{"v":3,"w":"3","f":null,"t":"n"},"D112":{"v":5,"w":"5","f":null,"t":"n"},"E112":{"v":6,"w":"6","f":null,"t":"n"},"F112":{"v":4,"w":"4","f":null,"t":"n"},"G112":{"v":5,"w":"5","f":null,"t":"n"},"H112":{"v":4,"w":"4","f":null,"t":"n"},"I112":{"v":9,"w":"9","f":null,"t":"n"},"A113":{"v":"Минимальная партия, шт.","w":"Минимальная партия, шт.","f":null,"t":"s"},"B113":{"v":20,"w":"20","f":null,"t":"n"},"C113":{"v":15,"w":"15","f":null,"t":"n"},"D113":{"v":25,"w":"25","f":null,"t":"n"},"E113":{"v":30,"w":"30","f":null,"t":"n"},"F113":{"v":18,"w":"18","f":null,"t":"n"},"G113":{"v":22,"w":"22","f":null,"t":"n"},"H113":{"v":16,"w":"16","f":null,"t":"n"},"I113":{"v":35,"w":"35","f":null,"t":"n"},"A117":{"v":"С помощью ИНДЕКС + ПОИСКПОЗ найдите план продаж по товару и месяцу. Используйте двумерный поиск, строка определяется товаром, столбец — месяцем. Используйте выпадающие списки с товарами и месяцами. ","w":"С помощью ИНДЕКС + ПОИСКПОЗ найдите план продаж по товару и месяцу. Используйте двумерный поиск, строка определяется товаром, столбец — месяцем. Используйте выпадающие списки с товарами и месяцами. ","f":null,"t":"s"},"A120":{"v":"Товар","w":"Товар","f":null,"t":"s"},"B120":{"v":"Месяц","w":"Месяц","f":null,"t":"s"},"C120":{"v":"План продаж, шт.","w":"План продаж, шт.","f":null,"t":"s"},"A121":{"v":"Планшет","w":"Планшет","f":null,"t":"s"},"B121":{"v":"Апрель","w":"Апрель","f":null,"t":"s"},"C121":{"v":88,"w":"88","f":"INDEX(B126:G132,MATCH(A121,A126:A132,0),MATCH(B121,B126:G126,0))","t":"n"},"A125":{"v":"Матрица планов продаж","w":"Матрица планов продаж","f":null,"t":"s"},"A126":{"v":"Товар","w":"Товар","f":null,"t":"s"},"B126":{"v":"Январь","w":"Январь","f":null,"t":"s"},"C126":{"v":"Февраль","w":"Февраль","f":null,"t":"s"},"D126":{"v":"Март","w":"Март","f":null,"t":"s"},"E126":{"v":"Апрель","w":"Апрель","f":null,"t":"s"},"F126":{"v":"Май","w":"Май","f":null,"t":"s"},"G126":{"v":"Июнь","w":"Июнь","f":null,"t":"s"},"A127":{"v":"Смартфон","w":"Смартфон","f":null,"t":"s"},"B127":{"v":120,"w":"120","f":null,"t":"n"},"C127":{"v":135,"w":"135","f":null,"t":"n"},"D127":{"v":140,"w":"140","f":null,"t":"n"},"E127":{"v":155,"w":"155","f":null,"t":"n"},"F127":{"v":160,"w":"160","f":null,"t":"n"},"G127":{"v":170,"w":"170","f":null,"t":"n"},"A128":{"v":"Планшет","w":"Планшет","f":null,"t":"s"},"B128":{"v":80,"w":"80","f":null,"t":"n"},"C128":{"v":76,"w":"76","f":null,"t":"n"},"D128":{"v":92,"w":"92","f":null,"t":"n"},"E128":{"v":88,"w":"88","f":null,"t":"n"},"F128":{"v":95,"w":"95","f":null,"t":"n"},"G128":{"v":102,"w":"102","f":null,"t":"n"},"A129":{"v":"Наушники","w":"Наушники","f":null,"t":"s"},"B129":{"v":210,"w":"210","f":null,"t":"n"},"C129":{"v":225,"w":"225","f":null,"t":"n"},"D129":{"v":240,"w":"240","f":null,"t":"n"},"E129":{"v":260,"w":"260","f":null,"t":"n"},"F129":{"v":275,"w":"275","f":null,"t":"n"},"G129":{"v":290,"w":"290","f":null,"t":"n"},"A130":{"v":"Кофемашина","w":"Кофемашина","f":null,"t":"s"},"B130":{"v":45,"w":"45","f":null,"t":"n"},"C130":{"v":52,"w":"52","f":null,"t":"n"},"D130":{"v":58,"w":"58","f":null,"t":"n"},"E130":{"v":61,"w":"61","f":null,"t":"n"},"F130":{"v":66,"w":"66","f":null,"t":"n"},"G130":{"v":70,"w":"70","f":null,"t":"n"},"A131":{"v":"Смарт-часы","w":"Смарт-часы","f":null,"t":"s"},"B131":{"v":95,"w":"95","f":null,"t":"n"},"C131":{"v":104,"w":"104","f":null,"t":"n"},"D131":{"v":110,"w":"110","f":null,"t":"n"},"E131":{"v":125,"w":"125","f":null,"t":"n"},"F131":{"v":130,"w":"130","f":null,"t":"n"},"G131":{"v":138,"w":"138","f":null,"t":"n"},"A132":{"v":"Роутер","w":"Роутер","f":null,"t":"s"},"B132":{"v":70,"w":"70","f":null,"t":"n"},"C132":{"v":74,"w":"74","f":null,"t":"n"},"D132":{"v":82,"w":"82","f":null,"t":"n"},"E132":{"v":89,"w":"89","f":null,"t":"n"},"F132":{"v":94,"w":"94","f":null,"t":"n"},"G132":{"v":100,"w":"100","f":null,"t":"n"}}}};
+    
+    let activeSheetName = Object.keys(workbookData)[0];
+    let selectedCellRef = null;
+
+    const tableEl = document.getElementById('excel-table');
+    const tabBarEl = document.getElementById('tab-bar');
+    const cellAddressEl = document.getElementById('cell-address');
+    const formulaInputEl = document.getElementById('formula-input');
+
+    // Utility: Convert column index to letters (e.g. 0 -> A, 27 -> AB)
+    function getColLetter(colIndex) {
+      let temp = '';
+      let letter = '';
+      while (colIndex >= 0) {
+        temp = colIndex % 26;
+        letter = String.fromCharCode(65 + temp) + letter;
+        colIndex = Math.floor(colIndex / 26) - 1;
+      }
+      return letter;
+    }
+
+    // Build the Tab Bar
+    function buildTabBar() {
+      tabBarEl.innerHTML = '';
+      Object.keys(workbookData).forEach(sheetName => {
+        const tab = document.createElement('div');
+        tab.className = 'sheet-tab' + (sheetName === activeSheetName ? ' active' : '');
+        tab.textContent = sheetName;
+        tab.addEventListener('click', () => {
+          activeSheetName = sheetName;
+          buildTabBar();
+          renderActiveSheet();
+        });
+        tabBarEl.appendChild(tab);
+      });
+    }
+
+    // Render the grid table
+    function renderActiveSheet() {
+      const sheet = workbookData[activeSheetName];
+      const cells = sheet.cells;
+      const range = sheet.range;
+
+      const minRow = 0;
+      const maxRow = Math.max(15, range.e.r); // Render at least 16 rows
+      const minCol = 0;
+      const maxCol = Math.max(7, range.e.c); // Render at least 8 columns
+
+      let html = '';
+
+      // Column widths (can adjust dynamically if needed, standard width 110px)
+      html += '<colgroup>';
+      html += '<col style="width: 44px;">'; // corner header
+      for (let c = minCol; c <= maxCol; c++) {
+        html += '<col style="width: 120px;">';
+      }
+      html += '</colgroup>';
+
+      // Table Header: Column letters
+      html += '<thead><tr>';
+      html += '<th class="corner-header"></th>';
+      for (let c = minCol; c <= maxCol; c++) {
+        const colLetter = getColLetter(c);
+        html += `<th class="col-header" id="col-${colLetter}">${colLetter}</th>`;
+      }
+      html += '</tr></thead>';
+
+      // Table Body: Rows
+      html += '<tbody>';
+      for (let r = minRow; r <= maxRow; r++) {
+        const rowNumber = r + 1;
+        html += '<tr>';
+        html += `<th class="row-header" id="row-${rowNumber}">${rowNumber}</th>`;
+        
+        for (let c = minCol; c <= maxCol; c++) {
+          const colLetter = getColLetter(c);
+          const cellRef = `${colLetter}${rowNumber}`;
+          const cell = cells[cellRef];
+          
+          let valStr = '';
+          let cellClass = 'cell';
+          
+          if (cell) {
+            valStr = cell.w || (cell.v !== null && cell.v !== undefined ? cell.v : '');
+            cellClass += cell.f ? ' has-formula' : '';
+          }
+
+          html += `<td class="${cellClass}" data-ref="${cellRef}">${escapeHtml(valStr.toString())}</td>`;
+        }
+        html += '</tr>';
+      }
+      html += '</tbody>';
+
+      tableEl.innerHTML = html;
+      selectedCellRef = null;
+      updateFormulaBar(null);
+
+      // Add click listeners to cells
+      tableEl.querySelectorAll('td.cell').forEach(td => {
+        td.addEventListener('mousedown', (e) => {
+          selectCell(e.target);
+        });
+      });
+    }
+
+    function selectCell(cellEl) {
+      // Remove previous selected class
+      tableEl.querySelectorAll('td.cell.selected').forEach(td => td.classList.remove('selected'));
+      tableEl.querySelectorAll('th.active-header').forEach(th => th.classList.remove('active-header'));
+
+      cellEl.classList.add('selected');
+      selectedCellRef = cellEl.getAttribute('data-ref');
+
+      // Highlight corresponding row and col headers
+      const parts = selectedCellRef.match(/^([A-Z]+)([0-9]+)$/);
+      if (parts) {
+        const colLetter = parts[1];
+        const rowNumber = parts[2];
+        const colHeader = document.getElementById(`col-${colLetter}`);
+        const rowHeader = document.getElementById(`row-${rowNumber}`);
+        if (colHeader) colHeader.classList.add('active-header');
+        if (rowHeader) rowHeader.classList.add('active-header');
+      }
+
+      updateFormulaBar(selectedCellRef);
+    }
+
+    function updateFormulaBar(ref) {
+      if (!ref) {
+        cellAddressEl.textContent = 'A1';
+        formulaInputEl.value = '';
+        return;
+      }
+
+      cellAddressEl.textContent = ref;
+      const sheet = workbookData[activeSheetName];
+      const cell = sheet.cells[ref];
+
+      if (cell) {
+        if (cell.f) {
+          formulaInputEl.value = '=' + cell.f;
+        } else {
+          formulaInputEl.value = cell.v !== null && cell.v !== undefined ? cell.v : '';
+        }
+      } else {
+        formulaInputEl.value = '';
+      }
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Security constraints to disable copy/paste/inspection
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (
+        (e.ctrlKey && (e.key === 'c' || e.key === 'C' || e.key === 'x' || e.key === 'X' || e.key === 's' || e.key === 'S' || e.key === 'u' || e.key === 'U')) ||
+        e.key === 'F12'
+      ) {
+        e.preventDefault();
+        alert("Copying, saving, or inspecting code is disabled on this preview page.");
+      }
+    });
+
+    // Initialize page
+    buildTabBar();
+    renderActiveSheet();
+  </script>
+</body>
+</html>

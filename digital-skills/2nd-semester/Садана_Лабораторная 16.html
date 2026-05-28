@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Садана: Лабораторная работа 16 — Excel Web Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --header-bg: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --excel-header-bg: #f8fafc;
+      --excel-header-text: #64748b;
+      --excel-grid-line: #e2e8f0;
+      --excel-cell-text: #1e293b;
+      --excel-cell-bg: #ffffff;
+      
+      --active-cell-border: #3b82f6;
+      --active-header-bg: #eff6ff;
+      --active-header-text: #1d4ed8;
+      
+      --primary: #6366f1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Top Navigation bar */
+    .top-nav {
+      background-color: var(--header-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .back-btn {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .back-btn:hover {
+      color: var(--text-main);
+    }
+
+    .title-area {
+      text-align: center;
+    }
+
+    .title-area h1 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 0.15rem;
+    }
+
+    .badge-lock {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* Description bar */
+    .description-bar {
+      background: rgba(30, 41, 59, 0.5);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.6rem 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Formula Bar */
+    .formula-bar {
+      background-color: #ffffff;
+      border-bottom: 1px solid #cbd5e1;
+      padding: 0.35rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .cell-address {
+      background-color: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 0.25rem 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #334155;
+      min-width: 60px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .formula-fx {
+      color: #94a3b8;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: bold;
+      font-style: italic;
+      font-size: 0.9rem;
+      user-select: none;
+    }
+
+    .formula-input {
+      flex: 1;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 0.25rem 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #0f172a;
+      outline: none;
+    }
+
+    /* Spreadsheet Container */
+    .sheet-viewport {
+      flex: 1;
+      overflow: auto;
+      background-color: #f1f5f9;
+      position: relative;
+    }
+
+    /* Protection Watermark Overlay */
+    .watermark-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 10;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='150' viewBox='0 0 250 150'%3E%3Ctext fill='rgba(15, 23, 42, 0.04)' font-size='11' font-family='sans-serif' x='20' y='50' transform='rotate(-20 20 50)'%3EPREVIEW ONLY - FORMULAS VISIBLE%3C/text%3E%3C/svg%3E");
+    }
+
+    /* Excel Table Style */
+    table.excel-table {
+      border-collapse: collapse;
+      background-color: var(--excel-cell-bg);
+      color: var(--excel-cell-text);
+      font-size: 0.825rem;
+      table-layout: fixed;
+    }
+
+    table.excel-table th, table.excel-table td {
+      border: 1px solid var(--excel-grid-line);
+      padding: 4px 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Header Row and Col cells */
+    table.excel-table th {
+      background-color: var(--excel-header-bg);
+      color: var(--excel-header-text);
+      font-weight: 500;
+      text-align: center;
+      user-select: none;
+      position: sticky;
+      z-index: 2;
+    }
+
+    table.excel-table th.col-header {
+      top: 0;
+      height: 24px;
+    }
+
+    table.excel-table th.row-header {
+      left: 0;
+      width: 44px;
+      z-index: 3;
+    }
+
+    table.excel-table th.corner-header {
+      top: 0;
+      left: 0;
+      z-index: 4;
+      width: 44px;
+      height: 24px;
+    }
+
+    /* Selected cell states */
+    table.excel-table td.cell {
+      cursor: cell;
+      position: relative;
+    }
+
+    table.excel-table td.cell.selected {
+      outline: 2px solid var(--active-cell-border);
+      outline-offset: -2px;
+      background-color: #f0f7ff !important;
+    }
+
+    table.excel-table th.active-header {
+      background-color: var(--active-header-bg) !important;
+      color: var(--active-header-text) !important;
+      font-weight: 700;
+    }
+
+    /* Tab Bar at the bottom */
+    .tab-bar {
+      background-color: #f1f5f9;
+      border-top: 1px solid #cbd5e1;
+      padding: 0.35rem 0.75rem 0;
+      display: flex;
+      gap: 0.25rem;
+      flex-shrink: 0;
+      overflow-x: auto;
+    }
+
+    .sheet-tab {
+      background-color: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      border-bottom: none;
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #475569;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .sheet-tab:hover {
+      background-color: #cbd5e1;
+    }
+
+    .sheet-tab.active {
+      background-color: #ffffff;
+      color: #0f172a;
+      font-weight: 700;
+      border-bottom: 1px solid #ffffff;
+      margin-bottom: -1px;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation bar -->
+  <div class="top-nav">
+    <a href="index.html" class="back-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to Directory
+    </a>
+    <div class="title-area">
+      <h1>Садана: Лабораторная работа 16</h1>
+    </div>
+    <span class="badge-lock">🔒 Download Locked until June 8, 2026</span>
+  </div>
+
+  <!-- Description bar -->
+  <div class="description-bar">
+    <span><strong>Description:</strong> Эконометрический анализ данных: расчет коэффициентов корреляции, построение линейного тренда и регрессионный анализ ВВП.</span>
+    <span>Click any cell to inspect its Excel formula. Copying is disabled.</span>
+  </div>
+
+  <!-- Formula Bar -->
+  <div class="formula-bar">
+    <div id="cell-address" class="cell-address">A1</div>
+    <span class="formula-fx">fx</span>
+    <input id="formula-input" class="formula-input" type="text" readonly value="">
+  </div>
+
+  <!-- Sheet Viewport -->
+  <div class="sheet-viewport" id="sheet-viewport">
+    <div class="watermark-overlay"></div>
+    <table class="excel-table" id="excel-table">
+      <!-- Generated dynamically by JS -->
+    </table>
+  </div>
+
+  <!-- Sheet Tab Bar -->
+  <div class="tab-bar" id="tab-bar">
+    <!-- Generated dynamically by JS -->
+  </div>
+
+  <script>
+    // Embedded parsed spreadsheet data
+    const workbookData = {"raw_data":{"ref":"A1:G21","range":{"s":{"c":0,"r":0},"e":{"c":6,"r":20}},"cells":{"A1":{"v":"Год","w":"Год","f":null,"t":"s"},"B1":{"v":"Темп роста инвестиций (%)","w":"Темп роста инвестиций (%)","f":null,"t":"s"},"C1":{"v":"Уровень безработицы (%)","w":"Уровень безработицы (%)","f":null,"t":"s"},"D1":{"v":"Уровень инфляции (%)","w":"Уровень инфляции (%)","f":null,"t":"s"},"E1":{"v":"Темп роста экспорта (%)","w":"Темп роста экспорта (%)","f":null,"t":"s"},"F1":{"v":"Уровень процентных ставок (%)","w":"Уровень процентных ставок (%)","f":null,"t":"s"},"G1":{"v":"Рост ВВП (%)","w":"Рост ВВП (%)","f":null,"t":"s"},"A2":{"v":2001,"w":"2001","f":null,"t":"n"},"B2":{"v":887987,"w":"887,987","f":null,"t":"n"},"C2":{"v":29411,"w":"29,411","f":null,"t":"n"},"D2":{"v":176041,"w":"176,041","f":null,"t":"n"},"E2":{"v":552869,"w":"552,869","f":null,"t":"n"},"F2":{"v":"0,893629","w":"0,893629","f":null,"t":"s"},"G2":{"v":349671,"w":"349,671","f":null,"t":"n"},"A3":{"v":2002,"w":"2002","f":null,"t":"n"},"B3":{"v":746267,"w":"746,267","f":null,"t":"n"},"C3":{"v":288198,"w":"288,198","f":null,"t":"n"},"D3":{"v":190717,"w":"190,717","f":null,"t":"n"},"E3":{"v":578798,"w":"578,798","f":null,"t":"n"},"F3":{"v":164498,"w":"164,498","f":null,"t":"n"},"G3":{"v":286174,"w":"286,174","f":null,"t":"n"},"A4":{"v":2003,"w":"2003","f":null,"t":"n"},"B4":{"v":831668,"w":"831,668","f":null,"t":"n"},"C4":{"v":19662,"w":"19,662","f":null,"t":"n"},"D4":{"v":144683,"w":"144,683","f":null,"t":"n"},"E4":{"v":730174,"w":"730,174","f":null,"t":"n"},"F4":{"v":136957,"w":"136,957","f":null,"t":"n"},"G4":{"v":364769,"w":"364,769","f":null,"t":"n"},"A5":{"v":2004,"w":"2004","f":null,"t":"n"},"B5":{"v":835835,"w":"835,835","f":null,"t":"n"},"C5":{"v":108047,"w":"108,047","f":null,"t":"n"},"D5":{"v":14019,"w":"14,019","f":null,"t":"n"},"E5":{"v":574324,"w":"574,324","f":null,"t":"n"},"F5":{"v":"0,789649","w":"0,789649","f":null,"t":"s"},"G5":{"v":452303,"w":"452,303","f":null,"t":"n"},"A6":{"v":2005,"w":"2005","f":null,"t":"n"},"B6":{"v":721707,"w":"721,707","f":null,"t":"n"},"C6":{"v":13088,"w":"13,088","f":null,"t":"n"},"D6":{"v":240626,"w":"240,626","f":null,"t":"n"},"E6":{"v":457443,"w":"457,443","f":null,"t":"n"},"F6":{"v":181302,"w":"181,302","f":null,"t":"n"},"G6":{"v":276585,"w":"276,585","f":null,"t":"n"},"A7":{"v":2006,"w":"2006","f":null,"t":"n"},"B7":{"v":754474,"w":"754,474","f":null,"t":"n"},"C7":{"v":206747,"w":"206,747","f":null,"t":"n"},"D7":{"v":267812,"w":"267,812","f":null,"t":"n"},"E7":{"v":488117,"w":"488,117","f":null,"t":"n"},"F7":{"v":209568,"w":"209,568","f":null,"t":"n"},"G7":{"v":276586,"w":"276,586","f":null,"t":"n"},"A8":{"v":2007,"w":"2007","f":null,"t":"n"},"B8":{"v":854579,"w":"854,579","f":null,"t":"n"},"C8":{"v":"0,875991","w":"0,875991","f":null,"t":"s"},"D8":{"v":196399,"w":"196,399","f":null,"t":"n"},"E8":{"v":720501,"w":"720,501","f":null,"t":"n"},"F8":{"v":211141,"w":"211,141","f":null,"t":"n"},"G8":{"v":457921,"w":"457,921","f":null,"t":"n"},"A9":{"v":2008,"w":"2008","f":null,"t":"n"},"B9":{"v":857854,"w":"857,854","f":null,"t":"n"},"C9":{"v":304317,"w":"304,317","f":null,"t":"n"},"D9":{"v":250177,"w":"250,177","f":null,"t":"n"},"E9":{"v":621247,"w":"621,247","f":null,"t":"n"},"F9":{"v":158032,"w":"158,032","f":null,"t":"n"},"G9":{"v":376743,"w":"376,743","f":null,"t":"n"},"A10":{"v":2009,"w":"2009","f":null,"t":"n"},"B10":{"v":697715,"w":"697,715","f":null,"t":"n"},"C10":{"v":33192,"w":"33,192","f":null,"t":"n"},"D10":{"v":218082,"w":"218,082","f":null,"t":"n"},"E10":{"v":47355,"w":"47,355","f":null,"t":"n"},"F10":{"v":211656,"w":"211,656","f":null,"t":"n"},"G10":{"v":253053,"w":"253,053","f":null,"t":"n"},"A11":{"v":2010,"w":"2010","f":null,"t":"n"},"B11":{"v":804246,"w":"804,246","f":null,"t":"n"},"C11":{"v":"0,402912","w":"0,402912","f":null,"t":"s"},"D11":{"v":167744,"w":"167,744","f":null,"t":"n"},"E11":{"v":628455,"w":"628,455","f":null,"t":"n"},"F11":{"v":154575,"w":"154,575","f":null,"t":"n"},"G11":{"v":354256,"w":"354,256","f":null,"t":"n"},"A12":{"v":2011,"w":"2011","f":null,"t":"n"},"B12":{"v":698207,"w":"698,207","f":null,"t":"n"},"C12":{"v":329482,"w":"329,482","f":null,"t":"n"},"D12":{"v":21807,"w":"21,807","f":null,"t":"n"},"E12":{"v":536537,"w":"536,537","f":null,"t":"n"},"F12":{"v":102598,"w":"102,598","f":null,"t":"n"},"G12":{"v":253658,"w":"253,658","f":null,"t":"n"},"A13":{"v":2012,"w":"2012","f":null,"t":"n"},"B13":{"v":820698,"w":"820,698","f":null,"t":"n"},"C13":{"v":25875,"w":"25,875","f":null,"t":"n"},"D13":{"v":276902,"w":"276,902","f":null,"t":"n"},"E13":{"v":623578,"w":"623,578","f":null,"t":"n"},"F13":{"v":197303,"w":"197,303","f":null,"t":"n"},"G13":{"v":253427,"w":"253,427","f":null,"t":"n"},"A14":{"v":2013,"w":"2013","f":null,"t":"n"},"B14":{"v":791102,"w":"791,102","f":null,"t":"n"},"C14":{"v":172951,"w":"172,951","f":null,"t":"n"},"D14":{"v":198209,"w":"198,209","f":null,"t":"n"},"E14":{"v":491893,"w":"491,893","f":null,"t":"n"},"F14":{"v":173333,"w":"173,333","f":null,"t":"n"},"G14":{"v":324196,"w":"324,196","f":null,"t":"n"},"A15":{"v":2014,"w":"2014","f":null,"t":"n"},"B15":{"v":544919,"w":"544,919","f":null,"t":"n"},"C15":{"v":47423,"w":"47,423","f":null,"t":"n"},"D15":{"v":278232,"w":"278,232","f":null,"t":"n"},"E15":{"v":42157,"w":"42,157","f":null,"t":"n"},"F15":{"v":379693,"w":"379,693","f":null,"t":"n"},"G15":{"v":108672,"w":"108,672","f":null,"t":"n"},"A16":{"v":2015,"w":"2015","f":null,"t":"n"},"B16":{"v":655885,"w":"655,885","f":null,"t":"n"},"C16":{"v":501093,"w":"501,093","f":null,"t":"n"},"D16":{"v":"0,690127","w":"0,690127","f":null,"t":"s"},"E16":{"v":424543,"w":"424,543","f":null,"t":"n"},"F16":{"v":239379,"w":"239,379","f":null,"t":"n"},"G16":{"v":127508,"w":"127,508","f":null,"t":"n"},"A17":{"v":2016,"w":"2016","f":null,"t":"n"},"B17":{"v":658352,"w":"658,352","f":null,"t":"n"},"C17":{"v":398111,"w":"398,111","f":null,"t":"n"},"D17":{"v":241095,"w":"241,095","f":null,"t":"n"},"E17":{"v":375534,"w":"375,534","f":null,"t":"n"},"F17":{"v":217569,"w":"217,569","f":null,"t":"n"},"A18":{"v":2017,"w":"2017","f":null,"t":"n"},"B18":{"v":689288,"w":"689,288","f":null,"t":"n"},"C18":{"v":257105,"w":"257,105","f":null,"t":"n"},"D18":{"v":204352,"w":"204,352","f":null,"t":"n"},"E18":{"v":52897,"w":"52,897","f":null,"t":"n"},"F18":{"v":218778,"w":"218,778","f":null,"t":"n"},"A19":{"v":2018,"w":"2018","f":null,"t":"n"},"B19":{"v":700299,"w":"700,299","f":null,"t":"n"},"C19":{"v":203939,"w":"203,939","f":null,"t":"n"},"D19":{"v":18505,"w":"18,505","f":null,"t":"n"},"E19":{"v":591818,"w":"591,818","f":null,"t":"n"},"F19":{"v":108996,"w":"108,996","f":null,"t":"n"},"A20":{"v":2019,"w":"2019","f":null,"t":"n"},"B20":{"v":621869,"w":"621,869","f":null,"t":"n"},"C20":{"v":365768,"w":"365,768","f":null,"t":"n"},"D20":{"v":204588,"w":"204,588","f":null,"t":"n"},"E20":{"v":50511,"w":"50,511","f":null,"t":"n"},"F20":{"v":273462,"w":"273,462","f":null,"t":"n"},"A21":{"v":2020,"w":"2020","f":null,"t":"n"},"B21":{"v":652736,"w":"652,736","f":null,"t":"n"},"C21":{"v":470539,"w":"470,539","f":null,"t":"n"},"D21":{"v":100622,"w":"100,622","f":null,"t":"n"},"E21":{"v":455926,"w":"455,926","f":null,"t":"n"},"F21":{"v":274089,"w":"274,089","f":null,"t":"n"}}},"analysis":{"ref":"A1:L10","range":{"s":{"c":0,"r":0},"e":{"c":11,"r":9}},"cells":{"B1":{"v":"Темп роста инвестиций (%)","w":"Темп роста инвестиций (%)","f":null,"t":"s"},"C1":{"v":"Уровень безработицы (%)","w":"Уровень безработицы (%)","f":null,"t":"s"},"D1":{"v":"Уровень инфляции (%)","w":"Уровень инфляции (%)","f":null,"t":"s"},"E1":{"v":"Темп роста экспорта (%)","w":"Темп роста экспорта (%)","f":null,"t":"s"},"F1":{"v":"Уровень процентных ставок (%)","w":"Уровень процентных ставок (%)","f":null,"t":"s"},"G1":{"v":"Рост ВВП (%)","w":"Рост ВВП (%)","f":null,"t":"s"},"I1":{"v":"k","w":"k","f":null,"t":"s"},"J1":{"v":"b","w":"b","f":null,"t":"s"},"K1":{"v":"Y","w":"Y","f":null,"t":"s"},"L1":{"v":"X","w":"X","f":null,"t":"s"},"A2":{"v":"Темп роста инвестиций (%)","w":"Темп роста инвестиций (%)","f":"TRANSPOSE(B1:G1)","t":"s"},"B2":{"v":0.9999999999999999,"w":"1.00","f":"CORREL(raw_data!$B$2:$B$16,raw_data!B$2:B$16)","t":"n"},"C2":{"v":-0.1947735559015656,"w":"-0.19","f":"CORREL(raw_data!$B$2:$B$16,raw_data!C2:C16)","t":"n"},"D2":{"v":-0.20296838399000752,"w":"-0.20","f":"CORREL(raw_data!$B$2:$B$16,raw_data!D2:D16)","t":"n"},"E2":{"v":0.7876880469330187,"w":"0.79","f":"CORREL(raw_data!$B$2:$B$16,raw_data!E$2:E$16)","t":"n"},"F2":{"v":-0.6640335547210539,"w":"-0.66","f":"CORREL(raw_data!$B$2:$B$16,raw_data!F2:F16)","t":"n"},"G2":{"v":0.8706201650060996,"w":"0.87","f":"CORREL(raw_data!$B$2:$B$16,raw_data!G2:G16)","t":"n"},"I2":{"v":0.9420855161186975,"w":"0.942085516","f":"LINEST(raw_data!G2:G16,raw_data!B2:B16)","t":"n"},"J2":{"v":-421428.1606761455,"w":"-421428.1607","f":null,"t":"n"},"K2":{"v":"Рост ВВП (%)","w":"Рост ВВП (%)","f":"G1","t":"s"},"L2":{"v":"Темп роста инвестиций (%)","w":"Темп роста инвестиций (%)","f":"B1","t":"s"},"A3":{"v":"Уровень безработицы (%)","w":"Уровень безработицы (%)","f":null,"t":"s"},"B3":{"v":-0.1947735559015656,"w":"-0.19","f":"CORREL(raw_data!$C$2:$C$16,raw_data!B$2:B$16)","t":"n"},"C3":{"v":1.0000000000000002,"w":"1.00","f":"CORREL(raw_data!$C$2:$C$16,raw_data!C$2:C$16)","t":"n"},"D3":{"v":-0.25606037834614404,"w":"-0.26","f":"CORREL(raw_data!$C$2:$C$16,raw_data!D$2:D$16)","t":"n"},"E3":{"v":0.16253473407010463,"w":"0.16","f":"CORREL(raw_data!$C$2:$C$16,raw_data!E$2:E$16)","t":"n"},"F3":{"v":-0.1917059069945892,"w":"-0.19","f":"CORREL(raw_data!$C$2:$C$16,raw_data!F$2:F$16)","t":"n"},"G3":{"v":-0.25085992738116253,"w":"-0.25","f":"CORREL(raw_data!$C$2:$C$16,raw_data!G$2:G$16)","t":"n"},"A4":{"v":"Уровень инфляции (%)","w":"Уровень инфляции (%)","f":null,"t":"s"},"B4":{"v":-0.20296838399000752,"w":"-0.20","f":"CORREL(raw_data!$D$2:$D$16,raw_data!B$2:B$16)","t":"n"},"C4":{"v":-0.25606037834614404,"w":"-0.26","f":"CORREL(raw_data!$D$2:$D$16,raw_data!C$2:C$16)","t":"n"},"D4":{"v":1,"w":"1.00","f":"CORREL(raw_data!$D$2:$D$16,raw_data!D$2:D$16)","t":"n"},"E4":{"v":-0.3051317739953297,"w":"-0.31","f":"CORREL(raw_data!$D$2:$D$16,raw_data!E$2:E$16)","t":"n"},"F4":{"v":0.6495238900594459,"w":"0.65","f":"CORREL(raw_data!$D$2:$D$16,raw_data!F$2:F$16)","t":"n"},"G4":{"v":-0.43925132881232865,"w":"-0.44","f":"CORREL(raw_data!$D$2:$D$16,raw_data!G$2:G$16)","t":"n"},"I4":{"v":"уравнение линейной регрессии","w":"уравнение линейной регрессии","f":null,"t":"s"},"A5":{"v":"Темп роста экспорта (%)","w":"Темп роста экспорта (%)","f":null,"t":"s"},"B5":{"v":0.7876880469330187,"w":"0.79","f":"CORREL(raw_data!$E$2:$E$16,raw_data!B$2:B$16)","t":"n"},"C5":{"v":0.16253473407010463,"w":"0.16","f":"CORREL(raw_data!$E$2:$E$16,raw_data!C$2:C$16)","t":"n"},"D5":{"v":-0.3051317739953297,"w":"-0.31","f":"CORREL(raw_data!$E$2:$E$16,raw_data!D$2:D$16)","t":"n"},"E5":{"v":1,"w":"1.00","f":"CORREL(raw_data!$E$2:$E$16,raw_data!E$2:E$16)","t":"n"},"F5":{"v":-0.683995939507124,"w":"-0.68","f":"CORREL(raw_data!$E$2:$E$16,raw_data!F$2:F$16)","t":"n"},"G5":{"v":0.6823960547300809,"w":"0.68","f":"CORREL(raw_data!$E$2:$E$16,raw_data!G$2:G$16)","t":"n"},"I5":{"v":"Y = k X + b","w":"Y = k X + b","f":null,"t":"s"},"A6":{"v":"Уровень процентных ставок (%)","w":"Уровень процентных ставок (%)","f":null,"t":"s"},"B6":{"v":-0.6640335547210539,"w":"-0.66","f":"CORREL(raw_data!$F$2:$F$16,raw_data!B$2:B$16)","t":"n"},"C6":{"v":-0.1917059069945892,"w":"-0.19","f":"CORREL(raw_data!$F$2:$F$16,raw_data!C$2:C$16)","t":"n"},"D6":{"v":0.6495238900594459,"w":"0.65","f":"CORREL(raw_data!$F$2:$F$16,raw_data!D$2:D$16)","t":"n"},"E6":{"v":-0.683995939507124,"w":"-0.68","f":"CORREL(raw_data!$F$2:$F$16,raw_data!E$2:E$16)","t":"n"},"F6":{"v":0.9999999999999999,"w":"1.00","f":"CORREL(raw_data!$F$2:$F$16,raw_data!F$2:F$16)","t":"n"},"G6":{"v":-0.6028606037699579,"w":"-0.60","f":"CORREL(raw_data!$F$2:$F$16,raw_data!G$2:G$16)","t":"n"},"A7":{"v":"Рост ВВП (%)","w":"Рост ВВП (%)","f":null,"t":"s"},"B7":{"v":0.8706201650060996,"w":"0.87","f":"CORREL(raw_data!$G$2:$G$16,raw_data!B$2:B$16)","t":"n"},"C7":{"v":-0.25085992738116253,"w":"-0.25","f":"CORREL(raw_data!$G$2:$G$16,raw_data!C$2:C16)","t":"n"},"D7":{"v":-0.43925132881232865,"w":"-0.44","f":"CORREL(raw_data!$G$2:$G$16,raw_data!D$2:D$16)","t":"n"},"E7":{"v":0.6823960547300809,"w":"0.68","f":"CORREL(raw_data!$G$2:$G$16,raw_data!E$2:E$16)","t":"n"},"F7":{"v":-0.6028606037699579,"w":"-0.60","f":"CORREL(raw_data!$G$2:$G$16,raw_data!F$2:F$16)","t":"n"},"G7":{"v":1,"w":"1.00","f":"CORREL(raw_data!$G$2:$G$16,raw_data!G$2:G16)","t":"n"},"A9":{"v":"Для анализа был выбран фактор с наибольшей корреляцией. Поскольку это однофакторная модель, многоколлинеарность не учитывалась.","w":"Для анализа был выбран фактор с наибольшей корреляцией. Поскольку это однофакторная модель, многоколлинеарность не учитывалась.","f":null,"t":"s"}}},"result":{"ref":"A1:F21","range":{"s":{"c":0,"r":0},"e":{"c":5,"r":20}},"cells":{"A1":{"v":"Год","w":"Год","f":null,"t":"s"},"B1":{"v":"Темп роста инвестиций (%)","w":"Темп роста инвестиций (%)","f":null,"t":"s"},"C1":{"v":"Рост ВВП (%)","w":"Рост ВВП (%)","f":null,"t":"s"},"D1":{"v":"Рост ВВП (%) (Y=kX+b)","w":"Рост ВВП (%) (Y=kX+b)","f":null,"t":"s"},"E1":{"v":"Рост ВВП (%) (ТЕНДЕНЦИЯ)","w":"Рост ВВП (%) (ТЕНДЕНЦИЯ)","f":null,"t":"s"},"A2":{"v":2001,"w":"2001","f":null,"t":"n"},"B2":{"v":887987,"w":"887,987","f":null,"t":"n"},"C2":{"v":349671,"w":"349,671","f":null,"t":"n"},"D2":{"v":415131.5305255483,"w":"415,132","f":"analysis!$I$2*result!B2+analysis!$J$2","t":"n"},"A3":{"v":2002,"w":"2002","f":null,"t":"n"},"B3":{"v":746267,"w":"746,267","f":null,"t":"n"},"C3":{"v":286174,"w":"286,174","f":null,"t":"n"},"D3":{"v":281619.17118120653,"w":"281,619","f":"analysis!$I$2*result!B3+analysis!$J$2","t":"n"},"A4":{"v":2003,"w":"2003","f":null,"t":"n"},"B4":{"v":831668,"w":"831,668","f":null,"t":"n"},"C4":{"v":364769,"w":"364,769","f":null,"t":"n"},"D4":{"v":362074.2163432594,"w":"362,074","f":"analysis!$I$2*result!B4+analysis!$J$2","t":"n"},"A5":{"v":2004,"w":"2004","f":null,"t":"n"},"B5":{"v":835835,"w":"835,835","f":null,"t":"n"},"C5":{"v":452303,"w":"452,303","f":null,"t":"n"},"D5":{"v":365999.88668892597,"w":"366,000","f":"analysis!$I$2*result!B5+analysis!$J$2","t":"n"},"A6":{"v":2005,"w":"2005","f":null,"t":"n"},"B6":{"v":721707,"w":"721,707","f":null,"t":"n"},"C6":{"v":276585,"w":"276,585","f":null,"t":"n"},"D6":{"v":258481.55090533133,"w":"258,482","f":"analysis!$I$2*result!B6+analysis!$J$2","t":"n"},"A7":{"v":2006,"w":"2006","f":null,"t":"n"},"B7":{"v":754474,"w":"754,474","f":null,"t":"n"},"C7":{"v":276586,"w":"276,586","f":null,"t":"n"},"D7":{"v":289350.86701199267,"w":"289,351","f":"analysis!$I$2*result!B7+analysis!$J$2","t":"n"},"A8":{"v":2007,"w":"2007","f":null,"t":"n"},"B8":{"v":854579,"w":"854,579","f":null,"t":"n"},"C8":{"v":457921,"w":"457,921","f":null,"t":"n"},"D8":{"v":383658.3376030549,"w":"383,658","f":"analysis!$I$2*result!B8+analysis!$J$2","t":"n"},"A9":{"v":2008,"w":"2008","f":null,"t":"n"},"B9":{"v":857854,"w":"857,854","f":null,"t":"n"},"C9":{"v":376743,"w":"376,743","f":null,"t":"n"},"D9":{"v":386743.6676683436,"w":"386,744","f":"analysis!$I$2*result!B9+analysis!$J$2","t":"n"},"A10":{"v":2009,"w":"2009","f":null,"t":"n"},"B10":{"v":697715,"w":"697,715","f":null,"t":"n"},"C10":{"v":253053,"w":"253,053","f":null,"t":"n"},"D10":{"v":235879.03520261153,"w":"235,879","f":"analysis!$I$2*result!B10+analysis!$J$2","t":"n"},"A11":{"v":2010,"w":"2010","f":null,"t":"n"},"B11":{"v":804246,"w":"804,246","f":null,"t":"n"},"C11":{"v":354256,"w":"354,256","f":null,"t":"n"},"D11":{"v":336240.3473202525,"w":"336,240","f":"analysis!$I$2*result!B11+analysis!$J$2","t":"n"},"A12":{"v":2011,"w":"2011","f":null,"t":"n"},"B12":{"v":698207,"w":"698,207","f":null,"t":"n"},"C12":{"v":253658,"w":"253,658","f":null,"t":"n"},"D12":{"v":236342.54127654195,"w":"236,343","f":"analysis!$I$2*result!B12+analysis!$J$2","t":"n"},"A13":{"v":2012,"w":"2012","f":null,"t":"n"},"B13":{"v":820698,"w":"820,698","f":null,"t":"n"},"C13":{"v":253427,"w":"253,427","f":null,"t":"n"},"D13":{"v":351739.53823143727,"w":"351,740","f":"analysis!$I$2*result!B13+analysis!$J$2","t":"n"},"A14":{"v":2013,"w":"2013","f":null,"t":"n"},"B14":{"v":791102,"w":"791,102","f":null,"t":"n"},"C14":{"v":324196,"w":"324,196","f":null,"t":"n"},"D14":{"v":323857.5752963883,"w":"323,858","f":"analysis!$I$2*result!B14+analysis!$J$2","t":"n"},"A15":{"v":2014,"w":"2014","f":null,"t":"n"},"B15":{"v":544919,"w":"544,919","f":null,"t":"n"},"C15":{"v":108672,"w":"108,672","f":null,"t":"n"},"D15":{"v":91932.13668173901,"w":"91,932","f":"analysis!$I$2*result!B15+analysis!$J$2","t":"n"},"A16":{"v":2015,"w":"2015","f":null,"t":"n"},"B16":{"v":655885,"w":"655,885","f":null,"t":"n"},"C16":{"v":127508,"w":"127,508","f":null,"t":"n"},"D16":{"v":196471.59806336643,"w":"196,472","f":"analysis!$I$2*result!B16+analysis!$J$2","t":"n"},"A17":{"v":2016,"w":"2016","f":null,"t":"n"},"B17":{"v":658352,"w":"658,352","f":null,"t":"n"},"D17":{"v":198795.72303163126,"w":"198,796","f":"analysis!$I$2*result!B17+analysis!$J$2","t":"n"},"E17":{"v":198795.72303163126,"w":"198,796","f":"TREND(C2:C16,B2:B16,B17:B21)","t":"n"},"A18":{"v":2017,"w":"2017","f":null,"t":"n"},"B18":{"v":689288,"w":"689,288","f":null,"t":"n"},"D18":{"v":227940.08055827924,"w":"227,940","f":"analysis!$I$2*result!B18+analysis!$J$2","t":"n"},"E18":{"v":227940.08055827924,"w":"227,940","f":null,"t":"n"},"A19":{"v":2018,"w":"2018","f":null,"t":"n"},"B19":{"v":700299,"w":"700,299","f":null,"t":"n"},"D19":{"v":238313.38417626225,"w":"238,313","f":"analysis!$I$2*result!B19+analysis!$J$2","t":"n"},"E19":{"v":238313.38417626225,"w":"238,313","f":null,"t":"n"},"A20":{"v":2019,"w":"2019","f":null,"t":"n"},"B20":{"v":621869,"w":"621,869","f":null,"t":"n"},"D20":{"v":164425.61714707274,"w":"164,426","f":"analysis!$I$2*result!B20+analysis!$J$2","t":"n"},"E20":{"v":164425.61714707274,"w":"164,426","f":null,"t":"n"},"A21":{"v":2020,"w":"2020","f":null,"t":"n"},"B21":{"v":652736,"w":"652,736","f":null,"t":"n"},"D21":{"v":193504.9707731086,"w":"193,505","f":"analysis!$I$2*result!B21+analysis!$J$2","t":"n"},"E21":{"v":193504.9707731086,"w":"193,505","f":null,"t":"n"}}}};
+    
+    let activeSheetName = Object.keys(workbookData)[0];
+    let selectedCellRef = null;
+
+    const tableEl = document.getElementById('excel-table');
+    const tabBarEl = document.getElementById('tab-bar');
+    const cellAddressEl = document.getElementById('cell-address');
+    const formulaInputEl = document.getElementById('formula-input');
+
+    // Utility: Convert column index to letters (e.g. 0 -> A, 27 -> AB)
+    function getColLetter(colIndex) {
+      let temp = '';
+      let letter = '';
+      while (colIndex >= 0) {
+        temp = colIndex % 26;
+        letter = String.fromCharCode(65 + temp) + letter;
+        colIndex = Math.floor(colIndex / 26) - 1;
+      }
+      return letter;
+    }
+
+    // Build the Tab Bar
+    function buildTabBar() {
+      tabBarEl.innerHTML = '';
+      Object.keys(workbookData).forEach(sheetName => {
+        const tab = document.createElement('div');
+        tab.className = 'sheet-tab' + (sheetName === activeSheetName ? ' active' : '');
+        tab.textContent = sheetName;
+        tab.addEventListener('click', () => {
+          activeSheetName = sheetName;
+          buildTabBar();
+          renderActiveSheet();
+        });
+        tabBarEl.appendChild(tab);
+      });
+    }
+
+    // Render the grid table
+    function renderActiveSheet() {
+      const sheet = workbookData[activeSheetName];
+      const cells = sheet.cells;
+      const range = sheet.range;
+
+      const minRow = 0;
+      const maxRow = Math.max(15, range.e.r); // Render at least 16 rows
+      const minCol = 0;
+      const maxCol = Math.max(7, range.e.c); // Render at least 8 columns
+
+      let html = '';
+
+      // Column widths (can adjust dynamically if needed, standard width 110px)
+      html += '<colgroup>';
+      html += '<col style="width: 44px;">'; // corner header
+      for (let c = minCol; c <= maxCol; c++) {
+        html += '<col style="width: 120px;">';
+      }
+      html += '</colgroup>';
+
+      // Table Header: Column letters
+      html += '<thead><tr>';
+      html += '<th class="corner-header"></th>';
+      for (let c = minCol; c <= maxCol; c++) {
+        const colLetter = getColLetter(c);
+        html += `<th class="col-header" id="col-${colLetter}">${colLetter}</th>`;
+      }
+      html += '</tr></thead>';
+
+      // Table Body: Rows
+      html += '<tbody>';
+      for (let r = minRow; r <= maxRow; r++) {
+        const rowNumber = r + 1;
+        html += '<tr>';
+        html += `<th class="row-header" id="row-${rowNumber}">${rowNumber}</th>`;
+        
+        for (let c = minCol; c <= maxCol; c++) {
+          const colLetter = getColLetter(c);
+          const cellRef = `${colLetter}${rowNumber}`;
+          const cell = cells[cellRef];
+          
+          let valStr = '';
+          let cellClass = 'cell';
+          
+          if (cell) {
+            valStr = cell.w || (cell.v !== null && cell.v !== undefined ? cell.v : '');
+            cellClass += cell.f ? ' has-formula' : '';
+          }
+
+          html += `<td class="${cellClass}" data-ref="${cellRef}">${escapeHtml(valStr.toString())}</td>`;
+        }
+        html += '</tr>';
+      }
+      html += '</tbody>';
+
+      tableEl.innerHTML = html;
+      selectedCellRef = null;
+      updateFormulaBar(null);
+
+      // Add click listeners to cells
+      tableEl.querySelectorAll('td.cell').forEach(td => {
+        td.addEventListener('mousedown', (e) => {
+          selectCell(e.target);
+        });
+      });
+    }
+
+    function selectCell(cellEl) {
+      // Remove previous selected class
+      tableEl.querySelectorAll('td.cell.selected').forEach(td => td.classList.remove('selected'));
+      tableEl.querySelectorAll('th.active-header').forEach(th => th.classList.remove('active-header'));
+
+      cellEl.classList.add('selected');
+      selectedCellRef = cellEl.getAttribute('data-ref');
+
+      // Highlight corresponding row and col headers
+      const parts = selectedCellRef.match(/^([A-Z]+)([0-9]+)$/);
+      if (parts) {
+        const colLetter = parts[1];
+        const rowNumber = parts[2];
+        const colHeader = document.getElementById(`col-${colLetter}`);
+        const rowHeader = document.getElementById(`row-${rowNumber}`);
+        if (colHeader) colHeader.classList.add('active-header');
+        if (rowHeader) rowHeader.classList.add('active-header');
+      }
+
+      updateFormulaBar(selectedCellRef);
+    }
+
+    function updateFormulaBar(ref) {
+      if (!ref) {
+        cellAddressEl.textContent = 'A1';
+        formulaInputEl.value = '';
+        return;
+      }
+
+      cellAddressEl.textContent = ref;
+      const sheet = workbookData[activeSheetName];
+      const cell = sheet.cells[ref];
+
+      if (cell) {
+        if (cell.f) {
+          formulaInputEl.value = '=' + cell.f;
+        } else {
+          formulaInputEl.value = cell.v !== null && cell.v !== undefined ? cell.v : '';
+        }
+      } else {
+        formulaInputEl.value = '';
+      }
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Security constraints to disable copy/paste/inspection
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (
+        (e.ctrlKey && (e.key === 'c' || e.key === 'C' || e.key === 'x' || e.key === 'X' || e.key === 's' || e.key === 'S' || e.key === 'u' || e.key === 'U')) ||
+        e.key === 'F12'
+      ) {
+        e.preventDefault();
+        alert("Copying, saving, or inspecting code is disabled on this preview page.");
+      }
+    });
+
+    // Initialize page
+    buildTabBar();
+    renderActiveSheet();
+  </script>
+</body>
+</html>

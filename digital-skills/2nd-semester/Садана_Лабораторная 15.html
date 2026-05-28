@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Садана: Лабораторная работа 15 — Excel Web Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --header-bg: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --excel-header-bg: #f8fafc;
+      --excel-header-text: #64748b;
+      --excel-grid-line: #e2e8f0;
+      --excel-cell-text: #1e293b;
+      --excel-cell-bg: #ffffff;
+      
+      --active-cell-border: #3b82f6;
+      --active-header-bg: #eff6ff;
+      --active-header-text: #1d4ed8;
+      
+      --primary: #6366f1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Top Navigation bar */
+    .top-nav {
+      background-color: var(--header-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .back-btn {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .back-btn:hover {
+      color: var(--text-main);
+    }
+
+    .title-area {
+      text-align: center;
+    }
+
+    .title-area h1 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 0.15rem;
+    }
+
+    .badge-lock {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* Description bar */
+    .description-bar {
+      background: rgba(30, 41, 59, 0.5);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.6rem 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Formula Bar */
+    .formula-bar {
+      background-color: #ffffff;
+      border-bottom: 1px solid #cbd5e1;
+      padding: 0.35rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .cell-address {
+      background-color: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 0.25rem 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #334155;
+      min-width: 60px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .formula-fx {
+      color: #94a3b8;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: bold;
+      font-style: italic;
+      font-size: 0.9rem;
+      user-select: none;
+    }
+
+    .formula-input {
+      flex: 1;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 0.25rem 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #0f172a;
+      outline: none;
+    }
+
+    /* Spreadsheet Container */
+    .sheet-viewport {
+      flex: 1;
+      overflow: auto;
+      background-color: #f1f5f9;
+      position: relative;
+    }
+
+    /* Protection Watermark Overlay */
+    .watermark-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 10;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='150' viewBox='0 0 250 150'%3E%3Ctext fill='rgba(15, 23, 42, 0.04)' font-size='11' font-family='sans-serif' x='20' y='50' transform='rotate(-20 20 50)'%3EPREVIEW ONLY - FORMULAS VISIBLE%3C/text%3E%3C/svg%3E");
+    }
+
+    /* Excel Table Style */
+    table.excel-table {
+      border-collapse: collapse;
+      background-color: var(--excel-cell-bg);
+      color: var(--excel-cell-text);
+      font-size: 0.825rem;
+      table-layout: fixed;
+    }
+
+    table.excel-table th, table.excel-table td {
+      border: 1px solid var(--excel-grid-line);
+      padding: 4px 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Header Row and Col cells */
+    table.excel-table th {
+      background-color: var(--excel-header-bg);
+      color: var(--excel-header-text);
+      font-weight: 500;
+      text-align: center;
+      user-select: none;
+      position: sticky;
+      z-index: 2;
+    }
+
+    table.excel-table th.col-header {
+      top: 0;
+      height: 24px;
+    }
+
+    table.excel-table th.row-header {
+      left: 0;
+      width: 44px;
+      z-index: 3;
+    }
+
+    table.excel-table th.corner-header {
+      top: 0;
+      left: 0;
+      z-index: 4;
+      width: 44px;
+      height: 24px;
+    }
+
+    /* Selected cell states */
+    table.excel-table td.cell {
+      cursor: cell;
+      position: relative;
+    }
+
+    table.excel-table td.cell.selected {
+      outline: 2px solid var(--active-cell-border);
+      outline-offset: -2px;
+      background-color: #f0f7ff !important;
+    }
+
+    table.excel-table th.active-header {
+      background-color: var(--active-header-bg) !important;
+      color: var(--active-header-text) !important;
+      font-weight: 700;
+    }
+
+    /* Tab Bar at the bottom */
+    .tab-bar {
+      background-color: #f1f5f9;
+      border-top: 1px solid #cbd5e1;
+      padding: 0.35rem 0.75rem 0;
+      display: flex;
+      gap: 0.25rem;
+      flex-shrink: 0;
+      overflow-x: auto;
+    }
+
+    .sheet-tab {
+      background-color: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      border-bottom: none;
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #475569;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .sheet-tab:hover {
+      background-color: #cbd5e1;
+    }
+
+    .sheet-tab.active {
+      background-color: #ffffff;
+      color: #0f172a;
+      font-weight: 700;
+      border-bottom: 1px solid #ffffff;
+      margin-bottom: -1px;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation bar -->
+  <div class="top-nav">
+    <a href="index.html" class="back-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to Directory
+    </a>
+    <div class="title-area">
+      <h1>Садана: Лабораторная работа 15</h1>
+    </div>
+    <span class="badge-lock">🔒 Download Locked until June 8, 2026</span>
+  </div>
+
+  <!-- Description bar -->
+  <div class="description-bar">
+    <span><strong>Description:</strong> Работа с базами данных партнеров, пакетов, допусков и пропусков с использованием сложных формул.</span>
+    <span>Click any cell to inspect its Excel formula. Copying is disabled.</span>
+  </div>
+
+  <!-- Formula Bar -->
+  <div class="formula-bar">
+    <div id="cell-address" class="cell-address">A1</div>
+    <span class="formula-fx">fx</span>
+    <input id="formula-input" class="formula-input" type="text" readonly value="">
+  </div>
+
+  <!-- Sheet Viewport -->
+  <div class="sheet-viewport" id="sheet-viewport">
+    <div class="watermark-overlay"></div>
+    <table class="excel-table" id="excel-table">
+      <!-- Generated dynamically by JS -->
+    </table>
+  </div>
+
+  <!-- Sheet Tab Bar -->
+  <div class="tab-bar" id="tab-bar">
+    <!-- Generated dynamically by JS -->
+  </div>
+
+  <script>
+    // Embedded parsed spreadsheet data
+    const workbookData = {"Партнеры":{"ref":"A1:E31","range":{"s":{"c":0,"r":0},"e":{"c":4,"r":30}},"cells":{"A1":{"v":"Справочник партнеров фестиваля","w":"Справочник партнеров фестиваля","f":null,"t":"s"},"A3":{"v":"Используя код партнера, определите название организации и формат участия для каждой строки журнала запросов. ","w":"Используя код партнера, определите название организации и формат участия для каждой строки журнала запросов. ","f":null,"t":"s"},"A7":{"v":"Код партнера","w":"Код партнера","f":null,"t":"s"},"B7":{"v":"Город","w":"Город","f":null,"t":"s"},"C7":{"v":"Организация","w":"Организация","f":null,"t":"s"},"D7":{"v":"Формат участия","w":"Формат участия","f":null,"t":"s"},"A8":{"v":"PF-101","w":"PF-101","f":null,"t":"s"},"B8":{"v":"Ярославль","w":"Ярославль","f":null,"t":"s"},"C8":{"v":"ООО Северный свет","w":"ООО Северный свет","f":null,"t":"s"},"D8":{"v":"генеральный","w":"генеральный","f":null,"t":"s"},"A9":{"v":"PF-102","w":"PF-102","f":null,"t":"s"},"B9":{"v":"Тверь","w":"Тверь","f":null,"t":"s"},"C9":{"v":"АО Маяк","w":"АО Маяк","f":null,"t":"s"},"D9":{"v":"информационный","w":"информационный","f":null,"t":"s"},"A10":{"v":"PF-103","w":"PF-103","f":null,"t":"s"},"B10":{"v":"Калуга","w":"Калуга","f":null,"t":"s"},"C10":{"v":"ИП Мирошина","w":"ИП Мирошина","f":null,"t":"s"},"D10":{"v":"партнер площадки","w":"партнер площадки","f":null,"t":"s"},"A11":{"v":"PF-104","w":"PF-104","f":null,"t":"s"},"B11":{"v":"Рязань","w":"Рязань","f":null,"t":"s"},"C11":{"v":"ООО Точка роста","w":"ООО Точка роста","f":null,"t":"s"},"D11":{"v":"генеральный","w":"генеральный","f":null,"t":"s"},"A12":{"v":"PF-105","w":"PF-105","f":null,"t":"s"},"B12":{"v":"Кострома","w":"Кострома","f":null,"t":"s"},"C12":{"v":"ЗАО Вектор","w":"ЗАО Вектор","f":null,"t":"s"},"D12":{"v":"информационный","w":"информационный","f":null,"t":"s"},"A13":{"v":"PF-106","w":"PF-106","f":null,"t":"s"},"B13":{"v":"Иваново","w":"Иваново","f":null,"t":"s"},"C13":{"v":"АО Импульс","w":"АО Импульс","f":null,"t":"s"},"D13":{"v":"партнер площадки","w":"партнер площадки","f":null,"t":"s"},"A14":{"v":"PF-107","w":"PF-107","f":null,"t":"s"},"B14":{"v":"Тула","w":"Тула","f":null,"t":"s"},"C14":{"v":"ООО Креатив Лаб","w":"ООО Креатив Лаб","f":null,"t":"s"},"D14":{"v":"генеральный","w":"генеральный","f":null,"t":"s"},"A15":{"v":"PF-108","w":"PF-108","f":null,"t":"s"},"B15":{"v":"Владимир","w":"Владимир","f":null,"t":"s"},"C15":{"v":"ИП Смирнов","w":"ИП Смирнов","f":null,"t":"s"},"D15":{"v":"информационный","w":"информационный","f":null,"t":"s"},"A16":{"v":"PF-109","w":"PF-109","f":null,"t":"s"},"B16":{"v":"Рыбинск","w":"Рыбинск","f":null,"t":"s"},"C16":{"v":"ООО Атлас","w":"ООО Атлас","f":null,"t":"s"},"D16":{"v":"партнер площадки","w":"партнер площадки","f":null,"t":"s"},"A17":{"v":"PF-110","w":"PF-110","f":null,"t":"s"},"B17":{"v":"Обнинск","w":"Обнинск","f":null,"t":"s"},"C17":{"v":"АО Баланс","w":"АО Баланс","f":null,"t":"s"},"D17":{"v":"генеральный","w":"генеральный","f":null,"t":"s"},"A18":{"v":"PF-111","w":"PF-111","f":null,"t":"s"},"B18":{"v":"Коломна","w":"Коломна","f":null,"t":"s"},"C18":{"v":"ООО Сфера","w":"ООО Сфера","f":null,"t":"s"},"D18":{"v":"информационный","w":"информационный","f":null,"t":"s"},"A19":{"v":"PF-112","w":"PF-112","f":null,"t":"s"},"B19":{"v":"Орёл","w":"Орёл","f":null,"t":"s"},"C19":{"v":"ИП Лапина","w":"ИП Лапина","f":null,"t":"s"},"D19":{"v":"партнер площадки","w":"партнер площадки","f":null,"t":"s"},"A21":{"v":"Журнал запросов","w":"Журнал запросов","f":null,"t":"s"},"A23":{"v":"Код партнёра","w":"Код партнёра","f":null,"t":"s"},"B23":{"v":"Организация","w":"Организация","f":null,"t":"s"},"C23":{"v":"Формат участия","w":"Формат участия","f":null,"t":"s"},"D23":{"v":"Дата","w":"Дата","f":null,"t":"s"},"E23":{"v":"Комментарий","w":"Комментарий","f":null,"t":"s"},"A24":{"v":"PF-110","w":"PF-110","f":null,"t":"s"},"B24":{"v":"АО Баланс","w":"АО Баланс","f":"VLOOKUP(A24,$A$7:$D$19,3,FALSE)","t":"s"},"C24":{"v":"генеральный","w":"генеральный","f":"VLOOKUP(A24,$A$7:$D$19,4,FALSE)","t":"s"},"D24":{"v":46114,"w":"02.04.2026","f":null,"t":"n"},"E24":{"v":"реклама сцены","w":"реклама сцены","f":null,"t":"s"},"A25":{"v":"PF-104","w":"PF-104","f":null,"t":"s"},"B25":{"v":"ООО Точка роста","w":"ООО Точка роста","f":"VLOOKUP(A25,$A$7:$D$19,3,FALSE)","t":"s"},"C25":{"v":"генеральный","w":"генеральный","f":"VLOOKUP(A25,$A$7:$D$19,4,FALSE)","t":"s"},"D25":{"v":46116,"w":"04.04.2026","f":null,"t":"n"},"E25":{"v":"раздатка","w":"раздатка","f":null,"t":"s"},"A26":{"v":"PF-107","w":"PF-107","f":null,"t":"s"},"B26":{"v":"ООО Креатив Лаб","w":"ООО Креатив Лаб","f":"VLOOKUP(A26,$A$7:$D$19,3,FALSE)","t":"s"},"C26":{"v":"генеральный","w":"генеральный","f":"VLOOKUP(A26,$A$7:$D$19,4,FALSE)","t":"s"},"D26":{"v":46118,"w":"06.04.2026","f":null,"t":"n"},"E26":{"v":"бренд-зона","w":"бренд-зона","f":null,"t":"s"},"A27":{"v":"PF-102","w":"PF-102","f":null,"t":"s"},"B27":{"v":"АО Маяк","w":"АО Маяк","f":"VLOOKUP(A27,$A$7:$D$19,3,FALSE)","t":"s"},"C27":{"v":"информационный","w":"информационный","f":"VLOOKUP(A27,$A$7:$D$19,4,FALSE)","t":"s"},"D27":{"v":46120,"w":"08.04.2026","f":null,"t":"n"},"E27":{"v":"баннер сайта","w":"баннер сайта","f":null,"t":"s"},"A28":{"v":"PF-111","w":"PF-111","f":null,"t":"s"},"B28":{"v":"ООО Сфера","w":"ООО Сфера","f":"VLOOKUP(A28,$A$7:$D$19,3,FALSE)","t":"s"},"C28":{"v":"информационный","w":"информационный","f":"VLOOKUP(A28,$A$7:$D$19,4,FALSE)","t":"s"},"D28":{"v":46122,"w":"10.04.2026","f":null,"t":"n"},"E28":{"v":"пресс-поддержка","w":"пресс-поддержка","f":null,"t":"s"},"A29":{"v":"PF-105","w":"PF-105","f":null,"t":"s"},"B29":{"v":"ЗАО Вектор","w":"ЗАО Вектор","f":"VLOOKUP(A29,$A$7:$D$19,3,FALSE)","t":"s"},"C29":{"v":"информационный","w":"информационный","f":"VLOOKUP(A29,$A$7:$D$19,4,FALSE)","t":"s"},"D29":{"v":46124,"w":"12.04.2026","f":null,"t":"n"},"E29":{"v":"логистика","w":"логистика","f":null,"t":"s"},"A30":{"v":"PF-108","w":"PF-108","f":null,"t":"s"},"B30":{"v":"ИП Смирнов","w":"ИП Смирнов","f":"VLOOKUP(A30,$A$7:$D$19,3,FALSE)","t":"s"},"C30":{"v":"информационный","w":"информационный","f":"VLOOKUP(A30,$A$7:$D$19,4,FALSE)","t":"s"},"D30":{"v":46126,"w":"14.04.2026","f":null,"t":"n"},"E30":{"v":"печатные материалы","w":"печатные материалы","f":null,"t":"s"},"A31":{"v":"PF-103","w":"PF-103","f":null,"t":"s"},"B31":{"v":"ИП Мирошина","w":"ИП Мирошина","f":"VLOOKUP(A31,$A$7:$D$19,3,FALSE)","t":"s"},"C31":{"v":"партнер площадки","w":"партнер площадки","f":"VLOOKUP(A31,$A$7:$D$19,4,FALSE)","t":"s"},"D31":{"v":46128,"w":"16.04.2026","f":null,"t":"n"},"E31":{"v":"навигация","w":"навигация","f":null,"t":"s"}}},"Пакеты":{"ref":"A1:K19","range":{"s":{"c":0,"r":0},"e":{"c":10,"r":18}},"cells":{"A1":{"v":"Запрос промо-пакетов для партнеров","w":"Запрос промо-пакетов для партнеров","f":null,"t":"s"},"A3":{"v":"По коду пакета определите стоимость, количество публикаций и длительность размещения для каждого запроса.","w":"По коду пакета определите стоимость, количество публикаций и длительность размещения для каждого запроса.","f":null,"t":"s"},"A6":{"v":"Код пакета","w":"Код пакета","f":null,"t":"s"},"B6":{"v":"Стоимость, ₽","w":"Стоимость, ₽","f":null,"t":"s"},"C6":{"v":"Публикаций","w":"Публикаций","f":null,"t":"s"},"D6":{"v":"Дней размещения","w":"Дней размещения","f":null,"t":"s"},"A7":{"v":"PR-04","w":"PR-04","f":null,"t":"s"},"B7":{"v":55000,"w":"55000","f":"VLOOKUP(A7,TRANSPOSE($A$15:$K$19),2,FALSE)","t":"n"},"C7":{"v":6,"w":"6","f":"VLOOKUP(A7,TRANSPOSE($A$15:$K$19),3,FALSE)","t":"n"},"D7":{"v":14,"w":"14","f":"VLOOKUP(A7,TRANSPOSE($A$15:$K$19),4,FALSE)","t":"n"},"A8":{"v":"PR-01","w":"PR-01","f":null,"t":"s"},"B8":{"v":35000,"w":"35000","f":"VLOOKUP(A8,TRANSPOSE($A$15:$K$19),2,FALSE)","t":"n"},"C8":{"v":3,"w":"3","f":"VLOOKUP(A8,TRANSPOSE($A$15:$K$19),3,FALSE)","t":"n"},"D8":{"v":7,"w":"7","f":"VLOOKUP(A8,TRANSPOSE($A$15:$K$19),4,FALSE)","t":"n"},"A9":{"v":"PR-07","w":"PR-07","f":null,"t":"s"},"B9":{"v":39000,"w":"39000","f":"VLOOKUP(A9,TRANSPOSE($A$15:$K$19),2,FALSE)","t":"n"},"C9":{"v":4,"w":"4","f":"VLOOKUP(A9,TRANSPOSE($A$15:$K$19),3,FALSE)","t":"n"},"D9":{"v":8,"w":"8","f":"VLOOKUP(A9,TRANSPOSE($A$15:$K$19),4,FALSE)","t":"n"},"A10":{"v":"PR-03","w":"PR-03","f":null,"t":"s"},"B10":{"v":28000,"w":"28000","f":"VLOOKUP(A10,TRANSPOSE($A$15:$K$19),2,FALSE)","t":"n"},"C10":{"v":2,"w":"2","f":"VLOOKUP(A10,TRANSPOSE($A$15:$K$19),3,FALSE)","t":"n"},"D10":{"v":5,"w":"5","f":"VLOOKUP(A10,TRANSPOSE($A$15:$K$19),4,FALSE)","t":"n"},"A11":{"v":"PR-06","w":"PR-06","f":null,"t":"s"},"B11":{"v":47000,"w":"47000","f":"VLOOKUP(A11,TRANSPOSE($A$15:$K$19),2,FALSE)","t":"n"},"C11":{"v":5,"w":"5","f":"VLOOKUP(A11,TRANSPOSE($A$15:$K$19),3,FALSE)","t":"n"},"D11":{"v":12,"w":"12","f":"VLOOKUP(A11,TRANSPOSE($A$15:$K$19),4,FALSE)","t":"n"},"A12":{"v":"PR-02","w":"PR-02","f":null,"t":"s"},"B12":{"v":42000,"w":"42000","f":"VLOOKUP(A12,TRANSPOSE($A$15:$K$19),2,FALSE)","t":"n"},"C12":{"v":4,"w":"4","f":"VLOOKUP(A12,TRANSPOSE($A$15:$K$19),3,FALSE)","t":"n"},"D12":{"v":10,"w":"10","f":"VLOOKUP(A12,TRANSPOSE($A$15:$K$19),4,FALSE)","t":"n"},"A14":{"v":"Справочная матрица","w":"Справочная матрица","f":null,"t":"s"},"B15":{"v":"PR-01","w":"PR-01","f":null,"t":"s"},"C15":{"v":"PR-02","w":"PR-02","f":null,"t":"s"},"D15":{"v":"PR-03","w":"PR-03","f":null,"t":"s"},"E15":{"v":"PR-04","w":"PR-04","f":null,"t":"s"},"F15":{"v":"PR-05","w":"PR-05","f":null,"t":"s"},"G15":{"v":"PR-06","w":"PR-06","f":null,"t":"s"},"H15":{"v":"PR-07","w":"PR-07","f":null,"t":"s"},"I15":{"v":"PR-08","w":"PR-08","f":null,"t":"s"},"J15":{"v":"PR-09","w":"PR-09","f":null,"t":"s"},"K15":{"v":"PR-10","w":"PR-10","f":null,"t":"s"},"A16":{"v":"Стоимость, ₽","w":"Стоимость, ₽","f":null,"t":"s"},"B16":{"v":35000,"w":"35 000","f":null,"t":"n"},"C16":{"v":42000,"w":"42 000","f":null,"t":"n"},"D16":{"v":28000,"w":"28 000","f":null,"t":"n"},"E16":{"v":55000,"w":"55 000","f":null,"t":"n"},"F16":{"v":61000,"w":"61 000","f":null,"t":"n"},"G16":{"v":47000,"w":"47 000","f":null,"t":"n"},"H16":{"v":39000,"w":"39 000","f":null,"t":"n"},"I16":{"v":73000,"w":"73 000","f":null,"t":"n"},"J16":{"v":66000,"w":"66 000","f":null,"t":"n"},"K16":{"v":50000,"w":"50 000","f":null,"t":"n"},"A17":{"v":"Публикаций","w":"Публикаций","f":null,"t":"s"},"B17":{"v":3,"w":"3","f":null,"t":"n"},"C17":{"v":4,"w":"4","f":null,"t":"n"},"D17":{"v":2,"w":"2","f":null,"t":"n"},"E17":{"v":6,"w":"6","f":null,"t":"n"},"F17":{"v":8,"w":"8","f":null,"t":"n"},"G17":{"v":5,"w":"5","f":null,"t":"n"},"H17":{"v":4,"w":"4","f":null,"t":"n"},"I17":{"v":10,"w":"10","f":null,"t":"n"},"J17":{"v":9,"w":"9","f":null,"t":"n"},"K17":{"v":7,"w":"7","f":null,"t":"n"},"A18":{"v":"Дней размещения","w":"Дней размещения","f":null,"t":"s"},"B18":{"v":7,"w":"7","f":null,"t":"n"},"C18":{"v":10,"w":"10","f":null,"t":"n"},"D18":{"v":5,"w":"5","f":null,"t":"n"},"E18":{"v":14,"w":"14","f":null,"t":"n"},"F18":{"v":21,"w":"21","f":null,"t":"n"},"G18":{"v":12,"w":"12","f":null,"t":"n"},"H18":{"v":8,"w":"8","f":null,"t":"n"},"I18":{"v":30,"w":"30","f":null,"t":"n"},"J18":{"v":24,"w":"24","f":null,"t":"n"},"K18":{"v":16,"w":"16","f":null,"t":"n"},"A19":{"v":"Приглашений VIP","w":"Приглашений VIP","f":null,"t":"s"},"B19":{"v":1,"w":"1","f":null,"t":"n"},"C19":{"v":2,"w":"2","f":null,"t":"n"},"D19":{"v":0,"w":"0","f":null,"t":"n"},"E19":{"v":3,"w":"3","f":null,"t":"n"},"F19":{"v":4,"w":"4","f":null,"t":"n"},"G19":{"v":2,"w":"2","f":null,"t":"n"},"H19":{"v":1,"w":"1","f":null,"t":"n"},"I19":{"v":5,"w":"5","f":null,"t":"n"},"J19":{"v":5,"w":"5","f":null,"t":"n"},"K19":{"v":3,"w":"3","f":null,"t":"n"}}},"Допуски":{"ref":"A1:K20","range":{"s":{"c":0,"r":0},"e":{"c":10,"r":19}},"cells":{"A1":{"v":"Журнал допуска на смену","w":"Журнал допуска на смену","f":null,"t":"s"},"A3":{"v":"По номеру бейджа найдите ФИО и ставку за смену. Реестр расположен справа.","w":"По номеру бейджа найдите ФИО и ставку за смену. Реестр расположен справа.","f":null,"t":"s"},"G5":{"v":"Кадровый реестр","w":"Кадровый реестр","f":null,"t":"s"},"A6":{"v":"Бейдж","w":"Бейдж","f":null,"t":"s"},"B6":{"v":"ФИО","w":"ФИО","f":null,"t":"s"},"C6":{"v":"Роль","w":"Роль","f":null,"t":"s"},"D6":{"v":"Ставка, ₽","w":"Ставка, ₽","f":null,"t":"s"},"G6":{"v":"Бейдж","w":"Бейдж","f":null,"t":"s"},"H6":{"v":"ФИО","w":"ФИО","f":null,"t":"s"},"I6":{"v":"Должность","w":"Должность","f":null,"t":"s"},"J6":{"v":"Ставка, ₽","w":"Ставка, ₽","f":null,"t":"s"},"K6":{"v":"Стаж, мес.","w":"Стаж, мес.","f":null,"t":"s"},"A7":{"v":"BG-408","w":"BG-408","f":null,"t":"s"},"B7":{"v":"Нина Уварова","w":"Нина Уварова","f":"XLOOKUP(A7,$G$6:$G$20,$H$6:$H$20)","t":"s"},"C7":{"v":"звук","w":"звук","f":null,"t":"s"},"D7":{"v":5200,"w":"5200","f":"HLOOKUP(A7,TRANSPOSE($G$6:$J$20),4,FALSE)","t":"n"},"G7":{"v":"BG-401","w":"BG-401","f":null,"t":"s"},"H7":{"v":"Марина Фролова","w":"Марина Фролова","f":null,"t":"s"},"I7":{"v":"администратор","w":"администратор","f":null,"t":"s"},"J7":{"v":4200,"w":"4 200","f":null,"t":"n"},"K7":{"v":14,"w":"14","f":null,"t":"n"},"A8":{"v":"BG-401","w":"BG-401","f":null,"t":"s"},"B8":{"v":"Марина Фролова","w":"Марина Фролова","f":"XLOOKUP(A8,$G$6:$G$20,$H$6:$H$20)","t":"s"},"C8":{"v":"координатор","w":"координатор","f":null,"t":"s"},"D8":{"v":4200,"w":"4200","f":"HLOOKUP(A8,TRANSPOSE($G$6:$J$20),4,FALSE)","t":"n"},"G8":{"v":"BG-402","w":"BG-402","f":null,"t":"s"},"H8":{"v":"Илья Белкин","w":"Илья Белкин","f":null,"t":"s"},"I8":{"v":"монтажник","w":"монтажник","f":null,"t":"s"},"J8":{"v":3900,"w":"3 900","f":null,"t":"n"},"K8":{"v":9,"w":"9","f":null,"t":"n"},"A9":{"v":"BG-414","w":"BG-414","f":null,"t":"s"},"B9":{"v":"Лев Тарасов","w":"Лев Тарасов","f":"XLOOKUP(A9,$G$6:$G$20,$H$6:$H$20)","t":"s"},"C9":{"v":"фото","w":"фото","f":null,"t":"s"},"D9":{"v":5000,"w":"5000","f":"HLOOKUP(A9,TRANSPOSE($G$6:$J$20),4,FALSE)","t":"n"},"G9":{"v":"BG-403","w":"BG-403","f":null,"t":"s"},"H9":{"v":"Олег Савин","w":"Олег Савин","f":null,"t":"s"},"I9":{"v":"супервайзер","w":"супервайзер","f":null,"t":"s"},"J9":{"v":4700,"w":"4 700","f":null,"t":"n"},"K9":{"v":16,"w":"16","f":null,"t":"n"},"A10":{"v":"BG-406","w":"BG-406","f":null,"t":"s"},"B10":{"v":"Вера Егорова","w":"Вера Егорова","f":"XLOOKUP(A10,$G$6:$G$20,$H$6:$H$20)","t":"s"},"C10":{"v":"регистрация","w":"регистрация","f":null,"t":"s"},"D10":{"v":4450,"w":"4450","f":"HLOOKUP(A10,TRANSPOSE($G$6:$J$20),4,FALSE)","t":"n"},"G10":{"v":"BG-404","w":"BG-404","f":null,"t":"s"},"H10":{"v":"Елена Нечаева","w":"Елена Нечаева","f":null,"t":"s"},"I10":{"v":"координатор сцены","w":"координатор сцены","f":null,"t":"s"},"J10":{"v":5100,"w":"5 100","f":null,"t":"n"},"K10":{"v":18,"w":"18","f":null,"t":"n"},"A11":{"v":"BG-409","w":"BG-409","f":null,"t":"s"},"B11":{"v":"Тамара Галкина","w":"Тамара Галкина","f":"XLOOKUP(A11,$G$6:$G$20,$H$6:$H$20)","t":"s"},"C11":{"v":"волонтеры","w":"волонтеры","f":null,"t":"s"},"D11":{"v":4800,"w":"4800","f":"HLOOKUP(A11,TRANSPOSE($G$6:$J$20),4,FALSE)","t":"n"},"G11":{"v":"BG-405","w":"BG-405","f":null,"t":"s"},"H11":{"v":"Глеб Волков","w":"Глеб Волков","f":null,"t":"s"},"I11":{"v":"дизайнер навигации","w":"дизайнер навигации","f":null,"t":"s"},"J11":{"v":4300,"w":"4 300","f":null,"t":"n"},"K11":{"v":11,"w":"11","f":null,"t":"n"},"A12":{"v":"BG-403","w":"BG-403","f":null,"t":"s"},"B12":{"v":"Олег Савин","w":"Олег Савин","f":"XLOOKUP(A12,$G$6:$G$20,$H$6:$H$20)","t":"s"},"C12":{"v":"сцена","w":"сцена","f":null,"t":"s"},"D12":{"v":4700,"w":"4700","f":"HLOOKUP(A12,TRANSPOSE($G$6:$J$20),4,FALSE)","t":"n"},"G12":{"v":"BG-406","w":"BG-406","f":null,"t":"s"},"H12":{"v":"Вера Егорова","w":"Вера Егорова","f":null,"t":"s"},"I12":{"v":"менеджер регистрации","w":"менеджер регистрации","f":null,"t":"s"},"J12":{"v":4450,"w":"4 450","f":null,"t":"n"},"K12":{"v":13,"w":"13","f":null,"t":"n"},"A13":{"v":"BG-412","w":"BG-412","f":null,"t":"s"},"B13":{"v":"Арсений Котов","w":"Арсений Котов","f":"XLOOKUP(A13,$G$6:$G$20,$H$6:$H$20)","t":"s"},"C13":{"v":"гримерка","w":"гримерка","f":null,"t":"s"},"D13":{"v":4350,"w":"4350","f":"HLOOKUP(A13,TRANSPOSE($G$6:$J$20),4,FALSE)","t":"n"},"G13":{"v":"BG-407","w":"BG-407","f":null,"t":"s"},"H13":{"v":"Павел Данилов","w":"Павел Данилов","f":null,"t":"s"},"I13":{"v":"светотехник","w":"светотехник","f":null,"t":"s"},"J13":{"v":4600,"w":"4 600","f":null,"t":"n"},"K13":{"v":20,"w":"20","f":null,"t":"n"},"A14":{"v":"BG-405","w":"BG-405","f":null,"t":"s"},"B14":{"v":"Глеб Волков","w":"Глеб Волков","f":"XLOOKUP(A14,$G$6:$G$20,$H$6:$H$20)","t":"s"},"C14":{"v":"навигация","w":"навигация","f":null,"t":"s"},"D14":{"v":4300,"w":"4300","f":"HLOOKUP(A14,TRANSPOSE($G$6:$J$20),4,FALSE)","t":"n"},"G14":{"v":"BG-408","w":"BG-408","f":null,"t":"s"},"H14":{"v":"Нина Уварова","w":"Нина Уварова","f":null,"t":"s"},"I14":{"v":"инженер звука","w":"инженер звука","f":null,"t":"s"},"J14":{"v":5200,"w":"5 200","f":null,"t":"n"},"K14":{"v":24,"w":"24","f":null,"t":"n"},"G15":{"v":"BG-409","w":"BG-409","f":null,"t":"s"},"H15":{"v":"Тамара Галкина","w":"Тамара Галкина","f":null,"t":"s"},"I15":{"v":"куратор волонтеров","w":"куратор волонтеров","f":null,"t":"s"},"J15":{"v":4800,"w":"4 800","f":null,"t":"n"},"K15":{"v":22,"w":"22","f":null,"t":"n"},"G16":{"v":"BG-410","w":"BG-410","f":null,"t":"s"},"H16":{"v":"Роман Юдин","w":"Роман Юдин","f":null,"t":"s"},"I16":{"v":"оператор экрана","w":"оператор экрана","f":null,"t":"s"},"J16":{"v":4150,"w":"4 150","f":null,"t":"n"},"K16":{"v":8,"w":"8","f":null,"t":"n"},"G17":{"v":"BG-411","w":"BG-411","f":null,"t":"s"},"H17":{"v":"Софья Мельник","w":"Софья Мельник","f":null,"t":"s"},"I17":{"v":"SMM-координатор","w":"SMM-координатор","f":null,"t":"s"},"J17":{"v":4000,"w":"4 000","f":null,"t":"n"},"K17":{"v":10,"w":"10","f":null,"t":"n"},"G18":{"v":"BG-412","w":"BG-412","f":null,"t":"s"},"H18":{"v":"Арсений Котов","w":"Арсений Котов","f":null,"t":"s"},"I18":{"v":"администратор гримерок","w":"администратор гримерок","f":null,"t":"s"},"J18":{"v":4350,"w":"4 350","f":null,"t":"n"},"K18":{"v":12,"w":"12","f":null,"t":"n"},"G19":{"v":"BG-413","w":"BG-413","f":null,"t":"s"},"H19":{"v":"Кира Осипова","w":"Кира Осипова","f":null,"t":"s"},"I19":{"v":"логист площадки","w":"логист площадки","f":null,"t":"s"},"J19":{"v":4500,"w":"4 500","f":null,"t":"n"},"K19":{"v":15,"w":"15","f":null,"t":"n"},"G20":{"v":"BG-414","w":"BG-414","f":null,"t":"s"},"H20":{"v":"Лев Тарасов","w":"Лев Тарасов","f":null,"t":"s"},"I20":{"v":"фотограф","w":"фотограф","f":null,"t":"s"},"J20":{"v":5000,"w":"5 000","f":null,"t":"n"},"K20":{"v":19,"w":"19","f":null,"t":"n"}}},"Пропуска":{"ref":"A1:I30","range":{"s":{"c":0,"r":0},"e":{"c":8,"r":29}},"cells":{"A1":{"v":"Контроль гостевых пропусков","w":"Контроль гостевых пропусков","f":null,"t":"s"},"A3":{"v":"Внизу листа расположен реестр гостевых пропусков. По номеру пропуска заполните в верхнем журнале ФИО гостя, организацию и зону доступа.","w":"Внизу листа расположен реестр гостевых пропусков. По номеру пропуска заполните в верхнем журнале ФИО гостя, организацию и зону доступа.","f":null,"t":"s"},"A6":{"v":"Номер пропуска","w":"Номер пропуска","f":null,"t":"s"},"B6":{"v":"ФИО гостя","w":"ФИО гостя","f":null,"t":"s"},"C6":{"v":"Зона доступа","w":"Зона доступа","f":null,"t":"s"},"D6":{"v":"Поток","w":"Поток","f":null,"t":"s"},"E6":{"v":"Организация","w":"Организация","f":null,"t":"s"},"A7":{"v":"GP-905","w":"GP-905","f":null,"t":"s"},"B7":{"v":"Юлия Карпова","w":"Юлия Карпова","f":"INDEX($A$16:$A$30,MATCH(A7,$B$16:$B$30))","t":"s"},"C7":{"v":"VIP-балкон","w":"VIP-балкон","f":"XLOOKUP(A7,$B$17:$B$30,$D$17:$D$30)","t":"s"},"D7":{"v":"утро","w":"утро","f":null,"t":"s"},"E7":{"v":"Север Медиа","w":"Север Медиа","f":"VLOOKUP(A7,$B$16:$D$30,2,FALSE)","t":"s"},"A8":{"v":"GP-912","w":"GP-912","f":null,"t":"s"},"B8":{"v":"Артур Зимин","w":"Артур Зимин","f":"INDEX($A$16:$A$30,MATCH(A8,$B$16:$B$30))","t":"s"},"C8":{"v":"партнерский лаунж","w":"партнерский лаунж","f":"XLOOKUP(A8,$B$17:$B$30,$D$17:$D$30)","t":"s"},"D8":{"v":"утро","w":"утро","f":null,"t":"s"},"E8":{"v":"Канал Мост","w":"Канал Мост","f":"VLOOKUP(A8,$B$16:$D$30,2,FALSE)","t":"s"},"A9":{"v":"GP-901","w":"GP-901","f":null,"t":"s"},"B9":{"v":"Анастасия Савельева","w":"Анастасия Савельева","f":"INDEX($A$16:$A$30,MATCH(A9,$B$16:$B$30))","t":"s"},"C9":{"v":"пресс-центр","w":"пресс-центр","f":"XLOOKUP(A9,$B$17:$B$30,$D$17:$D$30)","t":"s"},"D9":{"v":"день","w":"день","f":null,"t":"s"},"E9":{"v":"Медиацентр Восток","w":"Медиацентр Восток","f":"VLOOKUP(A9,$B$16:$D$30,2,FALSE)","t":"s"},"A10":{"v":"GP-914","w":"GP-914","f":null,"t":"s"},"B10":{"v":"Оксана Левина","w":"Оксана Левина","f":"INDEX($A$16:$A$30,MATCH(A10,$B$16:$B$30))","t":"s"},"C10":{"v":"VIP-балкон","w":"VIP-балкон","f":"XLOOKUP(A10,$B$17:$B$30,$D$17:$D$30)","t":"s"},"D10":{"v":"день","w":"день","f":null,"t":"s"},"E10":{"v":"Команда инвестора","w":"Команда инвестора","f":"VLOOKUP(A10,$B$16:$D$30,2,FALSE)","t":"s"},"A11":{"v":"GP-909","w":"GP-909","f":null,"t":"s"},"B11":{"v":"Лада Бородина","w":"Лада Бородина","f":"INDEX($A$16:$A$30,MATCH(A11,$B$16:$B$30))","t":"s"},"C11":{"v":"пресс-центр","w":"пресс-центр","f":"XLOOKUP(A11,$B$17:$B$30,$D$17:$D$30)","t":"s"},"D11":{"v":"вечер","w":"вечер","f":null,"t":"s"},"E11":{"v":"Бизнес Онлайн","w":"Бизнес Онлайн","f":"VLOOKUP(A11,$B$16:$D$30,2,FALSE)","t":"s"},"A12":{"v":"GP-903","w":"GP-903","f":null,"t":"s"},"B12":{"v":"Полина Ермакова","w":"Полина Ермакова","f":"INDEX($A$16:$A$30,MATCH(A12,$B$16:$B$30))","t":"s"},"C12":{"v":"партнерский лаунж","w":"партнерский лаунж","f":"XLOOKUP(A12,$B$17:$B$30,$D$17:$D$30)","t":"s"},"D12":{"v":"вечер","w":"вечер","f":null,"t":"s"},"E12":{"v":"Форум TV","w":"Форум TV","f":"VLOOKUP(A12,$B$16:$D$30,2,FALSE)","t":"s"},"A13":{"v":"GP-910","w":"GP-910","f":null,"t":"s"},"B13":{"v":"Кирилл Соков","w":"Кирилл Соков","f":"INDEX($A$16:$A$30,MATCH(A13,$B$16:$B$30))","t":"s"},"C13":{"v":"главная сцена","w":"главная сцена","f":"XLOOKUP(A13,$B$17:$B$30,$D$17:$D$30)","t":"s"},"D13":{"v":"вечер","w":"вечер","f":null,"t":"s"},"E13":{"v":"Сфера событий","w":"Сфера событий","f":"VLOOKUP(A13,$B$16:$D$30,2,FALSE)","t":"s"},"A15":{"v":"Реестр пропусков","w":"Реестр пропусков","f":null,"t":"s"},"A16":{"v":"ФИО гостя","w":"ФИО гостя","f":null,"t":"s"},"B16":{"v":"Номер пропуска","w":"Номер пропуска","f":null,"t":"s"},"C16":{"v":"Организация","w":"Организация","f":null,"t":"s"},"D16":{"v":"Зона доступа","w":"Зона доступа","f":null,"t":"s"},"A17":{"v":"Анастасия Савельева","w":"Анастасия Савельева","f":null,"t":"s"},"B17":{"v":"GP-901","w":"GP-901","f":null,"t":"s"},"C17":{"v":"Медиацентр Восток","w":"Медиацентр Восток","f":null,"t":"s"},"D17":{"v":"пресс-центр","w":"пресс-центр","f":null,"t":"s"},"A18":{"v":"Дмитрий Князев","w":"Дмитрий Князев","f":null,"t":"s"},"B18":{"v":"GP-902","w":"GP-902","f":null,"t":"s"},"C18":{"v":"Студия 47","w":"Студия 47","f":null,"t":"s"},"D18":{"v":"главная сцена","w":"главная сцена","f":null,"t":"s"},"A19":{"v":"Полина Ермакова","w":"Полина Ермакова","f":null,"t":"s"},"B19":{"v":"GP-903","w":"GP-903","f":null,"t":"s"},"C19":{"v":"Форум TV","w":"Форум TV","f":null,"t":"s"},"D19":{"v":"партнерский лаунж","w":"партнерский лаунж","f":null,"t":"s"},"A20":{"v":"Максим Чернов","w":"Максим Чернов","f":null,"t":"s"},"B20":{"v":"GP-904","w":"GP-904","f":null,"t":"s"},"C20":{"v":"Город FM","w":"Город FM","f":null,"t":"s"},"D20":{"v":"пресс-центр","w":"пресс-центр","f":null,"t":"s"},"A21":{"v":"Юлия Карпова","w":"Юлия Карпова","f":null,"t":"s"},"B21":{"v":"GP-905","w":"GP-905","f":null,"t":"s"},"C21":{"v":"Север Медиа","w":"Север Медиа","f":null,"t":"s"},"D21":{"v":"VIP-балкон","w":"VIP-балкон","f":null,"t":"s"},"A22":{"v":"Егор Шилов","w":"Егор Шилов","f":null,"t":"s"},"B22":{"v":"GP-906","w":"GP-906","f":null,"t":"s"},"C22":{"v":"АртБюро","w":"АртБюро","f":null,"t":"s"},"D22":{"v":"главная сцена","w":"главная сцена","f":null,"t":"s"},"A23":{"v":"Наталья Рогова","w":"Наталья Рогова","f":null,"t":"s"},"B23":{"v":"GP-907","w":"GP-907","f":null,"t":"s"},"C23":{"v":"Альянс PR","w":"Альянс PR","f":null,"t":"s"},"D23":{"v":"партнерский лаунж","w":"партнерский лаунж","f":null,"t":"s"},"A24":{"v":"Антон Серебров","w":"Антон Серебров","f":null,"t":"s"},"B24":{"v":"GP-908","w":"GP-908","f":null,"t":"s"},"C24":{"v":"Urban News","w":"Urban News","f":null,"t":"s"},"D24":{"v":"VIP-балкон","w":"VIP-балкон","f":null,"t":"s"},"A25":{"v":"Лада Бородина","w":"Лада Бородина","f":null,"t":"s"},"B25":{"v":"GP-909","w":"GP-909","f":null,"t":"s"},"C25":{"v":"Бизнес Онлайн","w":"Бизнес Онлайн","f":null,"t":"s"},"D25":{"v":"пресс-центр","w":"пресс-центр","f":null,"t":"s"},"A26":{"v":"Кирилл Соков","w":"Кирилл Соков","f":null,"t":"s"},"B26":{"v":"GP-910","w":"GP-910","f":null,"t":"s"},"C26":{"v":"Сфера событий","w":"Сфера событий","f":null,"t":"s"},"D26":{"v":"главная сцена","w":"главная сцена","f":null,"t":"s"},"A27":{"v":"Елена Панина","w":"Елена Панина","f":null,"t":"s"},"B27":{"v":"GP-911","w":"GP-911","f":null,"t":"s"},"C27":{"v":"Рекламная сеть 360","w":"Рекламная сеть 360","f":null,"t":"s"},"D27":{"v":"партнерский лаунж","w":"партнерский лаунж","f":null,"t":"s"},"A28":{"v":"Артур Зимин","w":"Артур Зимин","f":null,"t":"s"},"B28":{"v":"GP-912","w":"GP-912","f":null,"t":"s"},"C28":{"v":"Канал Мост","w":"Канал Мост","f":null,"t":"s"},"D28":{"v":"партнерский лаунж","w":"партнерский лаунж","f":null,"t":"s"},"A29":{"v":"Мария Фадеева","w":"Мария Фадеева","f":null,"t":"s"},"B29":{"v":"GP-913","w":"GP-913","f":null,"t":"s"},"C29":{"v":"Startup Daily","w":"Startup Daily","f":null,"t":"s"},"D29":{"v":"пресс-центр","w":"пресс-центр","f":null,"t":"s"},"A30":{"v":"Оксана Левина","w":"Оксана Левина","f":null,"t":"s"},"B30":{"v":"GP-914","w":"GP-914","f":null,"t":"s"},"C30":{"v":"Команда инвестора","w":"Команда инвестора","f":null,"t":"s"},"D30":{"v":"VIP-балкон","w":"VIP-балкон","f":null,"t":"s"}}}};
+    
+    let activeSheetName = Object.keys(workbookData)[0];
+    let selectedCellRef = null;
+
+    const tableEl = document.getElementById('excel-table');
+    const tabBarEl = document.getElementById('tab-bar');
+    const cellAddressEl = document.getElementById('cell-address');
+    const formulaInputEl = document.getElementById('formula-input');
+
+    // Utility: Convert column index to letters (e.g. 0 -> A, 27 -> AB)
+    function getColLetter(colIndex) {
+      let temp = '';
+      let letter = '';
+      while (colIndex >= 0) {
+        temp = colIndex % 26;
+        letter = String.fromCharCode(65 + temp) + letter;
+        colIndex = Math.floor(colIndex / 26) - 1;
+      }
+      return letter;
+    }
+
+    // Build the Tab Bar
+    function buildTabBar() {
+      tabBarEl.innerHTML = '';
+      Object.keys(workbookData).forEach(sheetName => {
+        const tab = document.createElement('div');
+        tab.className = 'sheet-tab' + (sheetName === activeSheetName ? ' active' : '');
+        tab.textContent = sheetName;
+        tab.addEventListener('click', () => {
+          activeSheetName = sheetName;
+          buildTabBar();
+          renderActiveSheet();
+        });
+        tabBarEl.appendChild(tab);
+      });
+    }
+
+    // Render the grid table
+    function renderActiveSheet() {
+      const sheet = workbookData[activeSheetName];
+      const cells = sheet.cells;
+      const range = sheet.range;
+
+      const minRow = 0;
+      const maxRow = Math.max(15, range.e.r); // Render at least 16 rows
+      const minCol = 0;
+      const maxCol = Math.max(7, range.e.c); // Render at least 8 columns
+
+      let html = '';
+
+      // Column widths (can adjust dynamically if needed, standard width 110px)
+      html += '<colgroup>';
+      html += '<col style="width: 44px;">'; // corner header
+      for (let c = minCol; c <= maxCol; c++) {
+        html += '<col style="width: 120px;">';
+      }
+      html += '</colgroup>';
+
+      // Table Header: Column letters
+      html += '<thead><tr>';
+      html += '<th class="corner-header"></th>';
+      for (let c = minCol; c <= maxCol; c++) {
+        const colLetter = getColLetter(c);
+        html += `<th class="col-header" id="col-${colLetter}">${colLetter}</th>`;
+      }
+      html += '</tr></thead>';
+
+      // Table Body: Rows
+      html += '<tbody>';
+      for (let r = minRow; r <= maxRow; r++) {
+        const rowNumber = r + 1;
+        html += '<tr>';
+        html += `<th class="row-header" id="row-${rowNumber}">${rowNumber}</th>`;
+        
+        for (let c = minCol; c <= maxCol; c++) {
+          const colLetter = getColLetter(c);
+          const cellRef = `${colLetter}${rowNumber}`;
+          const cell = cells[cellRef];
+          
+          let valStr = '';
+          let cellClass = 'cell';
+          
+          if (cell) {
+            valStr = cell.w || (cell.v !== null && cell.v !== undefined ? cell.v : '');
+            cellClass += cell.f ? ' has-formula' : '';
+          }
+
+          html += `<td class="${cellClass}" data-ref="${cellRef}">${escapeHtml(valStr.toString())}</td>`;
+        }
+        html += '</tr>';
+      }
+      html += '</tbody>';
+
+      tableEl.innerHTML = html;
+      selectedCellRef = null;
+      updateFormulaBar(null);
+
+      // Add click listeners to cells
+      tableEl.querySelectorAll('td.cell').forEach(td => {
+        td.addEventListener('mousedown', (e) => {
+          selectCell(e.target);
+        });
+      });
+    }
+
+    function selectCell(cellEl) {
+      // Remove previous selected class
+      tableEl.querySelectorAll('td.cell.selected').forEach(td => td.classList.remove('selected'));
+      tableEl.querySelectorAll('th.active-header').forEach(th => th.classList.remove('active-header'));
+
+      cellEl.classList.add('selected');
+      selectedCellRef = cellEl.getAttribute('data-ref');
+
+      // Highlight corresponding row and col headers
+      const parts = selectedCellRef.match(/^([A-Z]+)([0-9]+)$/);
+      if (parts) {
+        const colLetter = parts[1];
+        const rowNumber = parts[2];
+        const colHeader = document.getElementById(`col-${colLetter}`);
+        const rowHeader = document.getElementById(`row-${rowNumber}`);
+        if (colHeader) colHeader.classList.add('active-header');
+        if (rowHeader) rowHeader.classList.add('active-header');
+      }
+
+      updateFormulaBar(selectedCellRef);
+    }
+
+    function updateFormulaBar(ref) {
+      if (!ref) {
+        cellAddressEl.textContent = 'A1';
+        formulaInputEl.value = '';
+        return;
+      }
+
+      cellAddressEl.textContent = ref;
+      const sheet = workbookData[activeSheetName];
+      const cell = sheet.cells[ref];
+
+      if (cell) {
+        if (cell.f) {
+          formulaInputEl.value = '=' + cell.f;
+        } else {
+          formulaInputEl.value = cell.v !== null && cell.v !== undefined ? cell.v : '';
+        }
+      } else {
+        formulaInputEl.value = '';
+      }
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Security constraints to disable copy/paste/inspection
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (
+        (e.ctrlKey && (e.key === 'c' || e.key === 'C' || e.key === 'x' || e.key === 'X' || e.key === 's' || e.key === 'S' || e.key === 'u' || e.key === 'U')) ||
+        e.key === 'F12'
+      ) {
+        e.preventDefault();
+        alert("Copying, saving, or inspecting code is disabled on this preview page.");
+      }
+    });
+
+    // Initialize page
+    buildTabBar();
+    renderActiveSheet();
+  </script>
+</body>
+</html>
